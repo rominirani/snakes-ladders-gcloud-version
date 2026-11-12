@@ -145,6 +145,7 @@ Output ONLY valid JSON matching this exact structure:
    ```json
    {
      "id": "gcloud-wiz-security",
+     "name": "Google Cloud × Wiz Security Edition",
      "title": "Google Cloud × Wiz Security Edition",
      "editionBadge": "Cloud × Wiz Edition",
      "file": "packs/gcloud-wiz-security.json",

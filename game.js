@@ -499,7 +499,8 @@
     if (dom.packSelect) {
       dom.packSelect.replaceChildren();
       for (const entry of packEntries) {
-        const opt = htmlEl('option', '', entry.name);
+        const label = entry.name || entry.title || entry.editionBadge || entry.id;
+        const opt = htmlEl('option', '', label);
         opt.value = entry.id;
         if (entry.id === initialId) opt.selected = true;
         dom.packSelect.appendChild(opt);
@@ -534,11 +535,12 @@
 
     // Apply pack metadata to UI, tiers, milestones & allowed doc hosts
     const meta = packData.meta || {};
-    if (dom.brandTitle && meta.title) dom.brandTitle.textContent = meta.title;
+    const baseTitle = meta.title ? String(meta.title).split(':')[0].trim() : 'Snakes & Ladders';
+    if (dom.brandTitle) dom.brandTitle.textContent = baseTitle;
     if (dom.editionPill && meta.editionBadge) dom.editionPill.textContent = meta.editionBadge;
     if (dom.brandSubtitle && meta.subtitle) dom.brandSubtitle.textContent = meta.subtitle;
-    if (meta.title && meta.editionBadge) {
-      document.title = `${meta.title}: ${meta.editionBadge}`;
+    if (meta.editionBadge) {
+      document.title = `${baseTitle}: ${meta.editionBadge}`;
     }
 
     if (Array.isArray(meta.allowedDocHosts) && meta.allowedDocHosts.length > 0) {

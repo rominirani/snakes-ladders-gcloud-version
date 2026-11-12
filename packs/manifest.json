@@ -3,6 +3,7 @@
   "packs": [
     {
       "id": "cloud-architect",
+      "name": "Cloud Architect Edition (Full GCP Suite)",
       "title": "Cloud Architect Edition (Full GCP Suite)",
       "editionBadge": "Cloud Architect Edition",
       "file": "packs/cloud-architect.json",
@@ -10,6 +11,7 @@
     },
     {
       "id": "cloud-databases",
+      "name": "Google Cloud Databases Edition",
       "title": "Google Cloud Databases Edition",
       "editionBadge": "Cloud Databases Edition",
       "file": "packs/cloud-databases.json",
@@ -17,42 +19,48 @@
     },
     {
       "id": "cloud-security",
-      "title": "Google Cloud Security & Zero-Trust Edition",
+      "name": "Cloud Security & Zero-Trust Edition",
+      "title": "Cloud Security & Zero-Trust Edition",
       "editionBadge": "Cloud Security Edition",
       "file": "packs/cloud-security.json",
       "description": "54 scenarios & 36 quiz questions across IAM, Workload Identity, VPC Service Controls, Cloud Armor, KMS, Binary Auth & SCC."
     },
     {
       "id": "cloud-data-analytics",
-      "title": "Data Analytics & BigQuery Lakehouse Edition",
+      "name": "Data Analytics & BigQuery Edition",
+      "title": "Data Analytics & BigQuery Edition",
       "editionBadge": "Data & Analytics Edition",
       "file": "packs/cloud-data-analytics.json",
       "description": "54 scenarios & 36 quiz questions across BigQuery, Pub/Sub, Dataflow, BigLake Iceberg, Dataform, Composer & Dataplex."
     },
     {
       "id": "cloud-ai-agents",
-      "title": "GenAI, Vertex AI & AI Agents Edition",
+      "name": "GenAI, Vertex AI & Agents Edition",
+      "title": "GenAI, Vertex AI & Agents Edition",
       "editionBadge": "GenAI & AI Agents Edition",
       "file": "packs/cloud-ai-agents.json",
       "description": "54 scenarios & 36 quiz questions across Gemini, Vertex AI Search & RAG, Agent Development Kit (ADK), Model Armor & Vector Search."
     },
     {
       "id": "cloud-containers-serverless",
-      "title": "GKE, Cloud Run & Modern App Platform Edition",
+      "name": "GKE & Cloud Run Serverless Edition",
+      "title": "GKE & Cloud Run Serverless Edition",
       "editionBadge": "GKE & Serverless Edition",
       "file": "packs/cloud-containers-serverless.json",
       "description": "54 scenarios & 36 quiz questions across GKE Autopilot, Cloud Run, Service Mesh, Gateway API, Cloud Deploy & Secret Manager."
     },
     {
       "id": "cloud-networking",
-      "title": "Cloud Networking & Hybrid Connectivity Edition",
+      "name": "Cloud Networking & Hybrid Edition",
+      "title": "Cloud Networking & Hybrid Edition",
       "editionBadge": "Cloud Networking Edition",
       "file": "packs/cloud-networking.json",
       "description": "54 scenarios & 36 quiz questions across Shared VPC, Cloud Interconnect, HA VPN, Global Load Balancing, Cloud CDN, PSC & Cloud DNS."
     },
     {
       "id": "cloud-sre-finops",
-      "title": "SRE, Observability & Cloud FinOps Edition",
+      "name": "SRE, Observability & FinOps Edition",
+      "title": "SRE, Observability & FinOps Edition",
       "editionBadge": "SRE & Cloud FinOps Edition",
       "file": "packs/cloud-sre-finops.json",
       "description": "54 scenarios & 36 quiz questions across SLOs & Error Budgets, Cloud Logging/Trace, Incident Management, CUDs, Spot VMs & Cost Optimization."
