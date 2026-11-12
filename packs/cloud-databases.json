@@ -1,0 +1,730 @@
+{
+  "meta": {
+    "id": "cloud-databases",
+    "title": "Snakes & Ladders",
+    "editionBadge": "Google Cloud Databases Edition",
+    "subtitle": "Scale from local SQLite to 99.999% global databases — solve schema, HA, caching & query checks.",
+    "allowedDocHosts": [
+      "cloud.google.com",
+      "docs.cloud.google.com",
+      "firebase.google.com"
+    ],
+    "tiers": [
+      "GLOBAL 99.999%",
+      "AI & VECTOR DB",
+      "NOSQL & SCALE",
+      "MANAGED HA SQL",
+      "LOCAL & SCHEMA"
+    ],
+    "milestones": {
+      "1": {
+        "shortTag": "SQLite Dev",
+        "badge": "LOCAL SCHEMA ORIGIN",
+        "jump": "Square 1",
+        "title": "Local SQLite & Port 5432 Prototype",
+        "quip": "\"One local .db file on a laptop—zero connection pools, zero replicas, and big global ambitions.\"",
+        "tip": "Choose the right database model early: relational (Cloud SQL, AlloyDB, Spanner), document (Firestore), wide-column (Bigtable), or in-memory (Memorystore).",
+        "docLabel": "Google Cloud Databases Overview",
+        "docUrl": "https://cloud.google.com/products/databases"
+      },
+      "100": {
+        "shortTag": "99.999% DB",
+        "badge": "DATABASE NIRVANA",
+        "jump": "Square 100 · 99.999%",
+        "title": "Zero-Downtime Global Database Fleet!",
+        "quip": "\"Sub-5ms p99 reads worldwide, zero lock contention, continuous PITR, and five-nines external consistency.\"",
+        "tip": "World-class database reliability combines multi-region active-active or synchronous HA, connection pooling, hot-key prevention, and practiced PITR drills.",
+        "docLabel": "Google Cloud Database Center",
+        "docUrl": "https://cloud.google.com/database-center/docs/overview"
+      }
+    }
+  },
+  "ladders": [
+    {
+      "id": "db-up-spanner",
+      "shortTag": "Spanner HA",
+      "title": "Cloud Spanner Multi-Region (99.999%)",
+      "quip": "\"Active-active relational consistency across continents with zero failover downtime.\"",
+      "tip": "Cloud Spanner uses TrueTime to deliver externally consistent distributed ACID transactions with a 99.999% multi-region SLA.",
+      "docLabel": "Cloud Spanner Overview",
+      "docUrl": "https://cloud.google.com/spanner/docs/overview",
+      "q": "How does Cloud Spanner achieve external consistency across continents without global lock bottlenecks?",
+      "opts": [
+        "Hardware-assisted TrueTime atomic/GPS clocks bound clock uncertainty across data centers for lock-free snapshot reads and serializable writes",
+        "Asynchronous eventual consistency that reconciles conflicts once a week",
+        "Routing all reads and writes through a single VM in one zone"
+      ],
+      "ans": 0,
+      "why": "TrueTime bounds clock drift explicitly so Spanner can order transactions globally and serve consistent reads without locking."
+    },
+    {
+      "id": "db-up-alloydb",
+      "shortTag": "AlloyDB",
+      "title": "AlloyDB for PostgreSQL Columnar Engine",
+      "quip": "\"100% PostgreSQL compatible, 4x faster transactional throughput, and up to 100x faster analytical queries!\"",
+      "tip": "AlloyDB separates compute from storage and accelerates real-time BI queries on operational data via its adaptive in-memory columnar engine.",
+      "docLabel": "AlloyDB for PostgreSQL Overview",
+      "docUrl": "https://cloud.google.com/alloydb/docs/overview",
+      "q": "How does AlloyDB handle storage replication and read-pool scaling compared to standard PostgreSQL?",
+      "opts": [
+        "Storage is disaggregated across a regional intelligent storage layer, so adding Read Pool nodes does not require copying full disk volumes",
+        "Every read replica must copy the entire 10 TB disk over the internet first",
+        "AlloyDB only stores data in browser cookies"
+      ],
+      "ans": 0,
+      "why": "AlloyDB's disaggregated regional storage writes once across zones while compute and read pools attach to the shared storage layer quickly."
+    },
+    {
+      "id": "db-up-alloydb-ai",
+      "shortTag": "AlloyDB AI",
+      "title": "AlloyDB AI & ScaNN Vector Index",
+      "quip": "\"Ran millisecond hybrid SQL + semantic vector search using the `alloydb_scann` index right inside PostgreSQL!\"",
+      "tip": "Use AlloyDB AI (`alloydb_scann` index + `google_ml_integration`) to combine relational filters with high-speed vector similarity search.",
+      "docLabel": "AlloyDB AI Overview",
+      "docUrl": "https://cloud.google.com/alloydb/docs/ai",
+      "q": "Which specialized index in AlloyDB AI accelerates high-dimensional vector similarity search over standard pgvector HNSW/IVFFlat?",
+      "opts": [
+        "The `alloydb_scann` index powered by Google Research's ScaNN algorithm",
+        "A B-tree index on raw 8 KB text strings",
+        "An unindexed `LIKE '%query%'` full table scan"
+      ],
+      "ans": 0,
+      "why": "The `alloydb_scann` index delivers significantly higher QPS and lower memory footprint for vector similarity search."
+    },
+    {
+      "id": "db-up-sql-ep",
+      "shortTag": "Cloud SQL+",
+      "title": "Cloud SQL Enterprise Plus Data Cache",
+      "quip": "\"Planned maintenance completed in under a second and local NVMe SSD Data Cache cut read latency by 75%.\"",
+      "tip": "Choose Cloud SQL Enterprise Plus for 99.99% availability SLA, near-zero downtime maintenance, and local SSD Data Cache.",
+      "docLabel": "Cloud SQL Editions",
+      "docUrl": "https://cloud.google.com/sql/docs/postgres/editions-intro",
+      "q": "What key capabilities does Cloud SQL Enterprise Plus add over the standard Cloud SQL Enterprise edition?",
+      "opts": [
+        "99.99% availability SLA, sub-second planned maintenance downtime, local SSD Data Cache, and 35-day log retention",
+        "Removes the need for primary keys on tables",
+        "Only supports read-only CSV files"
+      ],
+      "ans": 0,
+      "why": "Enterprise Plus is engineered for tier-1 relational workloads requiring high performance and minimal maintenance disruption."
+    },
+    {
+      "id": "db-up-auth-proxy",
+      "shortTag": "Auth Proxy",
+      "title": "Cloud SQL Auth Proxy + IAM Auth",
+      "quip": "\"Zero static DB passwords and zero CIDR allowlists—every connection uses TLS 1.3 and short-lived IAM tokens!\"",
+      "tip": "Use the Cloud SQL Auth Proxy (or language connectors) with automatic IAM database authentication.",
+      "docLabel": "About the Cloud SQL Auth Proxy",
+      "docUrl": "https://cloud.google.com/sql/docs/postgres/sql-proxy",
+      "q": "What two security problems does the Cloud SQL Auth Proxy solve automatically?",
+      "opts": [
+        "Encrypts traffic with mutually verified TLS certificates and authenticates via IAM without managing static IP allowlists",
+        "Replaces SQL queries with GraphQL automatically",
+        "Compresses images stored in Cloud Storage"
+      ],
+      "ans": 0,
+      "why": "The Auth Proxy handles ephemeral certificate validation and IAM token refresh transparently."
+    },
+    {
+      "id": "db-up-bigtable",
+      "shortTag": "Bigtable",
+      "title": "Cloud Bigtable Wide-Column Scale",
+      "quip": "\"Scaled from 3 nodes to 30 nodes during peak trading and sustained 5 million ops/sec at 4ms p99 latency.\"",
+      "tip": "Use Cloud Bigtable for high-throughput, low-latency key-value and time-series workloads at terabyte-to-petabyte scale.",
+      "docLabel": "Bigtable Overview",
+      "docUrl": "https://cloud.google.com/bigtable/docs/overview",
+      "q": "How does Cloud Bigtable scale throughput when you add nodes to a cluster?",
+      "opts": [
+        "Throughput scales linearly because compute nodes are separated from Colossus distributed storage and rebalance tablet pointers in metadata",
+        "Every new node must copy 100% of the disk over SSH before serving",
+        "Adding nodes decreases write throughput"
+      ],
+      "ans": 0,
+      "why": "Bigtable tablets store data in Colossus; nodes hold metadata pointers and in-memory memtables, allowing rapid rebalancing."
+    },
+    {
+      "id": "db-up-bt-boost",
+      "shortTag": "Data Boost",
+      "title": "Bigtable Data Boost (Serverless Batch)",
+      "quip": "\"Ran a heavy Spark & BigQuery federated scan over production Bigtable using serverless Data Boost—zero impact on live user p99 latency!\"",
+      "tip": "Use Bigtable Data Boost to run batch reads, Spark jobs, or BigQuery federated queries on isolated serverless compute.",
+      "docLabel": "Bigtable Data Boost",
+      "docUrl": "https://cloud.google.com/bigtable/docs/data-boost-overview",
+      "q": "Why use Bigtable Data Boost when running large analytical batch jobs against a production Bigtable instance?",
+      "opts": [
+        "Executes batch reads on isolated, pay-per-use serverless compute so production serving nodes and latency are completely unaffected",
+        "Deletes old rows to make queries faster",
+        "Converts Bigtable into a single-node SQLite file"
+      ],
+      "ans": 0,
+      "why": "Data Boost reads underlying storage via separate serverless compute, isolating real-time app traffic from batch analytics."
+    },
+    {
+      "id": "db-up-firestore",
+      "shortTag": "Firestore",
+      "title": "Firestore Multi-Region (`nam5` / `eur3`)",
+      "quip": "\"Synced millions of mobile clients in real time with offline caching and 99.999% multi-region strong consistency.\"",
+      "tip": "Use Firestore for serverless document storage with real-time client listeners, ACID transactions, and automatic indexing.",
+      "docLabel": "Firestore Overview",
+      "docUrl": "https://cloud.google.com/firestore/docs/overview",
+      "q": "How does Firestore guarantee fast query performance regardless of how many million documents are in a collection?",
+      "opts": [
+        "Every query is backed by an index, so query latency scales with the size of the *result set*, not the total collection size",
+        "It scans every document in the database on every query",
+        "It limits collections to 100 documents max"
+      ],
+      "ans": 0,
+      "why": "Firestore's index-backed architecture ensures query time depends only on the number of results returned."
+    },
+    {
+      "id": "db-up-memorystore",
+      "shortTag": "Memorystore",
+      "title": "Memorystore for Valkey / Redis Cluster",
+      "quip": "\"Sub-millisecond cache hits absorbed 92% of product catalog reads—primary database CPU barely broke a sweat.\"",
+      "tip": "Place Memorystore in front of relational or document databases to absorb hot reads and session state at sub-millisecond latency.",
+      "docLabel": "Memorystore Overview",
+      "docUrl": "https://cloud.google.com/memorystore/docs/redis/redis-overview",
+      "q": "In a Cache-Aside pattern with Memorystore and Cloud SQL, what happens on a cache miss?",
+      "opts": [
+        "The application reads the record from Cloud SQL, writes it into Memorystore with a TTL, and returns it to the caller",
+        "The application returns an HTTP 500 error immediately",
+        "Memorystore deletes the Cloud SQL table"
+      ],
+      "ans": 0,
+      "why": "Cache-aside populates the cache on demand with a TTL so subsequent requests hit sub-millisecond memory."
+    },
+    {
+      "id": "db-up-dms",
+      "shortTag": "Cloud DMS",
+      "title": "Database Migration Service (DMS) + Gemini",
+      "quip": "\"Converted legacy Oracle PL/SQL stored procedures to AlloyDB PostgreSQL with Gemini-assisted conversion and continuous CDC cutover!\"",
+      "tip": "Use Database Migration Service (DMS) for serverless, continuous CDC database migrations with minimal cutover downtime.",
+      "docLabel": "Database Migration Service",
+      "docUrl": "https://cloud.google.com/database-migration/docs/overview",
+      "q": "How does Database Migration Service (DMS) minimize downtime when migrating a live production database to Cloud SQL or AlloyDB?",
+      "opts": [
+        "Performs an initial full dump followed by continuous Change Data Capture (CDC) replication until you promote the target during a brief cutover",
+        "Requires shutting down the source database for 2 weeks while copying files",
+        "Only migrates table names without row data"
+      ],
+      "ans": 0,
+      "why": "Continuous CDC keeps the target database in near-real-time sync so final cutover takes minutes rather than hours."
+    },
+    {
+      "id": "db-up-datastream",
+      "shortTag": "Datastream",
+      "title": "Datastream Real-Time CDC to BigQuery",
+      "quip": "\"Operational PostgreSQL inserts and updates land in BigQuery for analytics within seconds—zero custom ETL cron jobs.\"",
+      "tip": "Use Datastream for serverless Change Data Capture (CDC) streaming from MySQL, PostgreSQL, Oracle, or SQL Server into BigQuery.",
+      "docLabel": "Datastream Overview",
+      "docUrl": "https://cloud.google.com/datastream/docs/overview",
+      "q": "Why use Datastream to replicate operational database changes to BigQuery instead of running heavy analytical `SELECT` queries on the primary OLTP database?",
+      "opts": [
+        "Reads from the database's replication log (WAL/binlog) with minimal OLTP overhead and streams changes continuously into BigQuery",
+        "Locks all operational tables for 4 hours every afternoon",
+        "Deletes rows from the source database after reading them"
+      ],
+      "ans": 0,
+      "why": "Log-based CDC captures changes non-intrusively and offloads heavy analytical queries to BigQuery."
+    },
+    {
+      "id": "db-up-spanner-graph",
+      "shortTag": "SpannerGph",
+      "title": "Spanner Graph (ISO GQL + SQL)",
+      "quip": "\"Traversed 4-hop payment relationships with ISO GQL graph patterns inside the same ACID transaction as relational tables!\"",
+      "tip": "Use Spanner Graph to query property graphs using ISO GQL alongside standard SQL without moving data to a separate graph silo.",
+      "docLabel": "Spanner Graph Overview",
+      "docUrl": "https://cloud.google.com/spanner/docs/graph/overview",
+      "q": "What architectural problem does Spanner Graph eliminate?",
+      "opts": [
+        "Eliminates maintaining a separate graph database and brittle ETL sync pipelines—graph GQL and relational SQL query the same live tables",
+        "Replaces CSS styling in web apps",
+        "Eliminates the need for primary keys"
+      ],
+      "ans": 0,
+      "why": "Unified relational and graph storage keeps graph traversals strongly consistent with operational transactions."
+    },
+    {
+      "id": "db-up-chg-streams",
+      "shortTag": "ChgStreams",
+      "title": "Spanner Change Streams",
+      "quip": "\"Every Spanner mutation streamed cleanly through Dataflow to downstream search indexes and audit sinks in real time.\"",
+      "tip": "Use Spanner Change Streams to watch and stream data modifications (inserts, updates, deletes) across your database.",
+      "docLabel": "Spanner Change Streams",
+      "docUrl": "https://cloud.google.com/spanner/docs/change-streams",
+      "q": "How can downstream services react to row mutations in Cloud Spanner without polling tables?",
+      "opts": [
+        "Enable Spanner Change Streams and process the change records via Dataflow or Kafka/Pub/Sub connectors",
+        "Run `SELECT *` every 100ms from a cron script",
+        "Parse raw disk image snapshots manually"
+      ],
+      "ans": 0,
+      "why": "Change Streams capture every committed mutation in commit-timestamp order with high scalability."
+    },
+    {
+      "id": "db-up-geo-part",
+      "shortTag": "GeoPartitn",
+      "title": "Spanner Geo-Partitioning",
+      "quip": "\"One global Spanner table—EU users' rows live and serve in Europe while US users' rows live in the US!\"",
+      "tip": "Use Spanner Geo-Partitioning (placement keys) to pin specific row partitions to regional placements for low latency and residency.",
+      "docLabel": "Spanner Geo-Partitioning",
+      "docUrl": "https://cloud.google.com/spanner/docs/geo-partitioning",
+      "q": "What does Cloud Spanner Geo-Partitioning allow you to do within a single database table?",
+      "opts": [
+        "Pin specific subsets of rows to designated regional placements based on a placement key while maintaining a single unified global schema",
+        "Split every column into a different cloud provider",
+        "Disable ACID transactions on international rows"
+      ],
+      "ans": 0,
+      "why": "Geo-partitioning delivers local read/write latency and data residency compliance without sharding into separate databases."
+    },
+    {
+      "id": "db-up-interleave",
+      "shortTag": "Interleave",
+      "title": "Spanner Interleaved Tables (`INTERLEAVE IN PARENT`)",
+      "quip": "\"Co-located `OrderItems` physically inside their parent `Orders` split—parent-child joins completed in a single local read!\"",
+      "tip": "Use `INTERLEAVE IN PARENT` in Cloud Spanner for strong parent-child locality so joins avoid cross-machine network hops.",
+      "docLabel": "Spanner Schema & Interleaving",
+      "docUrl": "https://cloud.google.com/spanner/docs/schema-and-data-model",
+      "q": "When should you declare a child table with `INTERLEAVE IN PARENT` in Cloud Spanner?",
+      "opts": [
+        "When child rows (e.g., `OrderLines`) are frequently queried and joined together with their parent row (`Order`) by shared primary key prefix",
+        "When the two tables have no relationship or shared keys",
+        "When storing static CSS files"
+      ],
+      "ans": 0,
+      "why": "Interleaving physically co-locates child rows with their parent row on the same storage split, making parent-child joins ultra-fast."
+    },
+    {
+      "id": "db-up-read-rep",
+      "shortTag": "ReadReplca",
+      "title": "Cloud SQL & AlloyDB Read Replicas",
+      "quip": "\"Offloaded heavy analytics & reporting traffic to Read Replicas—primary writer latency stayed flat at 2ms.\"",
+      "tip": "Route read-heavy reporting queries to Read Replicas (or AlloyDB Read Pools) and configure cross-region replicas for DR.",
+      "docLabel": "Cloud SQL Read Replicas",
+      "docUrl": "https://cloud.google.com/sql/docs/postgres/replication",
+      "q": "Which two purposes do Cross-Region Read Replicas serve in Cloud SQL and AlloyDB?",
+      "opts": [
+        "Serving low-latency read traffic closer to users in other regions AND acting as a promotable disaster-recovery target if the primary region fails",
+        "Doubling primary write throughput in the home region",
+        "Automatically encrypting client browsers"
+      ],
+      "ans": 0,
+      "why": "Cross-region replicas provide both geo-distributed read scaling and regional disaster recovery promotion."
+    },
+    {
+      "id": "db-up-data-conn",
+      "shortTag": "DataConnct",
+      "title": "Firebase Data Connect (Cloud SQL)",
+      "quip": "\"Defined our schema once—got relational Cloud SQL PostgreSQL plus auto-generated type-safe web & mobile SDKs!\"",
+      "tip": "Use Firebase Data Connect to pair managed Cloud SQL PostgreSQL with generated type-safe client SDKs and vector search.",
+      "docLabel": "Cloud SQL for PostgreSQL",
+      "docUrl": "https://cloud.google.com/sql/docs/postgres",
+      "q": "How does Firebase Data Connect secure client queries against a Cloud SQL PostgreSQL backend?",
+      "opts": [
+        "Compiles predefined application queries/mutations into server-enforced PostgreSQL prepared statements gated by declarative `@auth` directives",
+        "Lets browsers send raw arbitrary `DROP TABLE` SQL strings over the internet",
+        "Stores the entire PostgreSQL database in localStorage"
+      ],
+      "ans": 0,
+      "why": "Clients can only invoke pre-declared, auth-checked operations—never arbitrary raw SQL from the browser."
+    },
+    {
+      "id": "db-up-bq-federated",
+      "shortTag": "BQ Federat",
+      "title": "BigQuery Federated Queries (`EXTERNAL_QUERY`)",
+      "quip": "\"Joined live operational lookup tables in AlloyDB/Spanner directly with historical petabytes in BigQuery in one SQL statement!\"",
+      "tip": "Use BigQuery `EXTERNAL_QUERY` federated connections to join live Cloud SQL, AlloyDB, or Spanner data with BigQuery tables.",
+      "docLabel": "BigQuery Federated Queries",
+      "docUrl": "https://cloud.google.com/bigquery/docs/federated-queries-intro",
+      "q": "How do you reduce data transfer overhead when using `EXTERNAL_QUERY` to query Cloud SQL or Spanner from BigQuery?",
+      "opts": [
+        "Push predicates (`WHERE` filters) and column projections inside the inner `EXTERNAL_QUERY` SQL string so the operational DB returns only needed rows",
+        "Pull the entire 5 TB operational table into BigQuery before filtering",
+        "Run the query 100 times in a loop"
+      ],
+      "ans": 0,
+      "why": "Filtering and aggregating inside the federated query string minimizes rows transferred from the operational database."
+    }
+  ],
+  "snakes": [
+    {
+      "id": "db-sn-spanner-seq",
+      "shortTag": "SpannerKey",
+      "title": "Monotonic Auto-Increment Primary Key in Spanner",
+      "quip": "\"Used `1, 2, 3, 4...` as the primary key in Cloud Spanner—100% of writes hammered a single split on one server!\"",
+      "tip": "Never use monotonically increasing integers or timestamps as the leading key column in Spanner; use UUIDv4 or bit-reversed sequences.",
+      "prevent": "Use UUIDv4, `BIT_REVERSED_POSITIVE` sequences, or shard-hash prefixes for primary keys.",
+      "detect": "Spanner Key Visualizer showing a bright red line along the bottom/top edge of the key space.",
+      "recover": "Migrate to a bit-reversed sequence or composite hash-prefixed key to spread writes across splits.",
+      "docLabel": "Spanner Schema Best Practices",
+      "docUrl": "https://cloud.google.com/spanner/docs/schema-design",
+      "q": "Why does a monotonically increasing timestamp or integer primary key cause a write hotspot in Cloud Spanner?",
+      "opts": [
+        "Spanner range-partitions rows in key order, so every new sequential key lands on the exact same last split on a single server",
+        "Spanner only supports string keys under 4 characters",
+        "Sequential numbers break SQL syntax"
+      ],
+      "ans": 0,
+      "why": "Distributing leading key values (via UUIDv4 or bit-reversal) spreads inserts evenly across all splits."
+    },
+    {
+      "id": "db-sn-bt-hotspot",
+      "shortTag": "BT Hotspot",
+      "title": "Sequential Timestamp Row Keys in Bigtable",
+      "quip": "\"Named every Bigtable row key `20261112_163000_deviceId`—one tablet node hit 100% CPU while the other 19 nodes sat idle!\"",
+      "tip": "Put high-cardinality attributes (e.g., hashed `deviceId` or `tenantId`) first in Bigtable row keys, followed by reverse/bucketed timestamps.",
+      "prevent": "Design row keys with a high-cardinality prefix (`user_hash#reverse_timestamp`) and test with Key Visualizer.",
+      "detect": "Bigtable Key Visualizer showing a single hot horizontal row-key band and `hot_tablets` monitoring alerts.",
+      "recover": "Redesign the row-key prefix to distribute writes across tablet ranges and dual-write/backfill.",
+      "docLabel": "Bigtable Schema Design",
+      "docUrl": "https://cloud.google.com/bigtable/docs/schema-design",
+      "q": "How should you order `sensor_id` and `timestamp` in a Cloud Bigtable row key when querying recent readings per sensor?",
+      "opts": [
+        "`sensor_id#reverse_timestamp` so writes spread across sensors and recent readings for a sensor sit contiguously at the top",
+        "`timestamp#sensor_id` so all sensors write to the exact same tablet simultaneously",
+        "Store the entire year of readings in a single cell"
+      ],
+      "ans": 0,
+      "why": "Leading with `sensor_id` distributes writes across tablets while `reverse_timestamp` makes 'latest N readings for sensor X' a fast range scan."
+    },
+    {
+      "id": "db-sn-conn-storm",
+      "shortTag": "Conn Storm",
+      "title": "Serverless Spike Exhausted Postgres `max_connections`",
+      "quip": "\"Cloud Run scaled to 600 instances during a traffic surge; each opened 5 DB connections and hit `FATAL: remaining connection slots are reserved`!\"",
+      "tip": "Pool connections (PgBouncer / Cloud SQL Enterprise Plus / AlloyDB connection pooling), reuse pools globally, and cap `--max-instances`.",
+      "prevent": "Enable connection pooling, initialize pools in global scope, tune `--concurrency`, and bound `--max-instances`.",
+      "detect": "Cloud Monitoring `database/postgresql/num_backends` approaching `max_connections` (80% alert).",
+      "recover": "Cap `--max-instances` on serverless callers and enable managed connection pooling / PgBouncer.",
+      "docLabel": "Manage Cloud SQL Connections",
+      "docUrl": "https://cloud.google.com/sql/docs/postgres/manage-connections",
+      "q": "What is the most effective architectural fix when hundreds of serverless instances exhaust PostgreSQL `max_connections`?",
+      "opts": [
+        "Use connection pooling (e.g., PgBouncer / built-in pooling), reuse pools in global scope, and bound serverless `--max-instances`",
+        "Set `max_connections = 500000` on a 1-vCPU database",
+        "Create a new database instance for every HTTP request"
+      ],
+      "ans": 0,
+      "why": "Each raw PostgreSQL backend process consumes memory and IPC overhead; connection pooling multiplexes thousands of app clients over a small pool of server connections."
+    },
+    {
+      "id": "db-sn-open-sql",
+      "shortTag": "Open 5432",
+      "title": "Public `0.0.0.0/0` Authorized Network on Cloud SQL",
+      "quip": "\"Whitelisted `0.0.0.0/0` on Cloud SQL to test from a coffee shop—internet password-spraying bots arrived in 30 seconds!\"",
+      "tip": "Enforce `sql.restrictAuthorizedNetworks` via Org Policy and connect strictly via Private IP / PSC and the Cloud SQL Auth Proxy.",
+      "prevent": "Enforce Org Policy `constraints/sql.restrictAuthorizedNetworks` and disable public IPs on production databases.",
+      "detect": "Security Command Center `SQL_WORLD_READABLE` / `OPEN_FIREWALL` findings & Database Center security alerts.",
+      "recover": "Clear `0.0.0.0/0` from Authorized Networks immediately, rotate credentials, and switch to Cloud SQL Auth Proxy over Private IP.",
+      "docLabel": "Configure Private IP for Cloud SQL",
+      "docUrl": "https://cloud.google.com/sql/docs/postgres/configure-private-ip",
+      "q": "Which Organization Policy constraint blocks anyone from adding public Authorized Networks to Cloud SQL instances?",
+      "opts": [
+        "`constraints/sql.restrictAuthorizedNetworks` (paired with Private IP / Cloud SQL Auth Proxy)",
+        "`constraints/storage.uniformBucketLevelAccess`",
+        "`constraints/compute.disableSerialPortAccess`"
+      ],
+      "ans": 0,
+      "why": "Enforcing `sql.restrictAuthorizedNetworks` prevents broad IP allowlisting on Cloud SQL."
+    },
+    {
+      "id": "db-sn-zonal-sql",
+      "shortTag": "1-Zone SQL",
+      "title": "Single-Zone Prod Database Hit by Zonal Outage",
+      "quip": "\"Deployed production Cloud SQL in Zonal mode (`--availability-type=ZONAL`)—when the zone had an issue, checkout went dark with no standby!\"",
+      "tip": "Always enable Regional High Availability (`--availability-type=REGIONAL`) on production Cloud SQL and AlloyDB instances.",
+      "prevent": "Deploy production instances with `--availability-type=REGIONAL` (synchronous primary + standby across two zones).",
+      "detect": "Database Center availability posture warning flagging single-zone production instances.",
+      "recover": "Update the instance to `--availability-type=REGIONAL` so a synchronous standby is provisioned in a secondary zone.",
+      "docLabel": "Cloud SQL High Availability",
+      "docUrl": "https://cloud.google.com/sql/docs/postgres/high-availability",
+      "q": "How is data replicated between the primary and standby instance in a Regional High Availability (HA) Cloud SQL configuration?",
+      "opts": [
+        "Synchronously at the regional persistent storage layer across two zones in the same region",
+        "By emailing CSV exports once every midnight",
+        "Via browser localStorage"
+      ],
+      "ans": 0,
+      "why": "Synchronous regional storage replication guarantees zero data loss (RPO = 0) on automatic zonal failover."
+    },
+    {
+      "id": "db-sn-rw-locks",
+      "shortTag": "RW LockLag",
+      "title": "Used Read-Write Transaction for Read-Only Spanner Reporting",
+      "quip": "\"Ran a slow dashboard query inside a Read-Write transaction in Spanner—held shared locks across 50,000 rows and stalled live orders!\"",
+      "tip": "Use lock-free Read-Only transactions (`snapshot`) or bounded staleness reads for all non-mutating queries in Cloud Spanner.",
+      "prevent": "Use Read-Only transactions (`snapshot`) for all reporting, search, and lookup queries that do not write.",
+      "detect": "Spanner `LOCK_STATS` system tables showing high lock wait times on read-heavy tables.",
+      "recover": "Switch the reporting code from a Read-Write transaction to a lock-free Read-Only snapshot.",
+      "docLabel": "Spanner Transactions",
+      "docUrl": "https://cloud.google.com/spanner/docs/transactions",
+      "q": "Why should read-only queries in Cloud Spanner never use a Read-Write transaction context?",
+      "opts": [
+        "Read-Write transactions acquire shared read locks that block concurrent writers, whereas Read-Only transactions read lock-free via TrueTime MVCC",
+        "Read-Write transactions cannot execute `SELECT` statements",
+        "Read-Only transactions delete rows after reading"
+      ],
+      "ans": 0,
+      "why": "Spanner's multi-version concurrency control lets Read-Only transactions execute at a timestamp with zero locking."
+    },
+    {
+      "id": "db-sn-no-pitr",
+      "shortTag": "No PITR",
+      "title": "Accidental `DELETE FROM orders` Without Point-in-Time Recovery",
+      "quip": "\"A migration script wiped the `orders` table at 3 PM—and because PITR was off, the only backup was from 15 hours earlier!\"",
+      "tip": "Enable Point-in-Time Recovery (PITR) on Cloud SQL, AlloyDB, Spanner, and Firestore to restore to any second.",
+      "prevent": "Enable Point-in-Time Recovery (PITR) and automated backups on all production databases.",
+      "detect": "Database Center data-protection posture checks flagging instances with PITR disabled.",
+      "recover": "Enable PITR immediately; during an incident, clone/restore to the exact timestamp just prior to the bad mutation.",
+      "docLabel": "Cloud SQL Point-in-Time Recovery",
+      "docUrl": "https://cloud.google.com/sql/docs/postgres/backup-recovery/pitr",
+      "q": "What recovery capability does Point-in-Time Recovery (PITR) provide beyond daily automated snapshots?",
+      "opts": [
+        "Continuous transaction log (WAL/binlog) archival allowing you to restore a database clone to any specific second within the retention window",
+        "Automatic translation of SQL into Python",
+        "Free unlimited compute CPU"
+      ],
+      "ans": 0,
+      "why": "Replaying write-ahead logs on top of a base backup recovers data up to the exact second before human error struck."
+    },
+    {
+      "id": "db-sn-fs-hotdoc",
+      "shortTag": "1-Doc Lock",
+      "title": "Single-Document Global Counter Contention in Firestore",
+      "quip": "\"Incremented a single `metrics/live_users` Firestore document on every login—hit document write contention limits and threw `ABORTED`!\"",
+      "tip": "Shard high-frequency counters across N distributed counter documents in Firestore or track ephemeral counts in Memorystore.",
+      "prevent": "Use Sharded Distributed Counters in Firestore or increment high-velocity counters in Memorystore.",
+      "detect": "Firestore `ABORTED` transaction contention errors and Key Visualizer single-document write spikes.",
+      "recover": "Split the single counter document into `shards/0..N` subdocuments or offload real-time counters to Memorystore.",
+      "docLabel": "Firestore Distributed Counters",
+      "docUrl": "https://cloud.google.com/firestore/docs/solutions/counters",
+      "q": "Why does updating the exact same Firestore document 500 times per second from concurrent clients cause contention errors?",
+      "opts": [
+        "Each document update must serialize ACID index and storage commits for that document key—sharding across N documents distributes the writes",
+        "Firestore only allows 1 write per hour across the entire project",
+        "JSON documents cannot store integers"
+      ],
+      "ans": 0,
+      "why": "Distributed counters spread concurrent increments across multiple documents and sum them on read."
+    },
+    {
+      "id": "db-sn-full-scan",
+      "shortTag": "Full Scan",
+      "title": "Missing Index on 100M-Row Table Pinned DB CPU at 100%",
+      "quip": "\"Added a new `WHERE status = 'PENDING' AND region = 'APAC'` query on a 100-million-row table without a composite index—every poll scanned the whole table!\"",
+      "tip": "Use Cloud SQL / AlloyDB Query Insights and Index Advisor to identify slow full-table scans and create covering composite indexes.",
+      "prevent": "Run `EXPLAIN (ANALYZE, BUFFERS)` in staging and review Index Advisor recommendations in Query Insights.",
+      "detect": "Query Insights showing high `shared_blks_read` / sequential scan latency and 100% CPU utilization.",
+      "recover": "Create the composite index concurrently (`CREATE INDEX CONCURRENTLY`) so live writes are not blocked.",
+      "docLabel": "Use Query Insights & Index Advisor",
+      "docUrl": "https://cloud.google.com/sql/docs/postgres/using-query-insights",
+      "q": "In PostgreSQL on Cloud SQL or AlloyDB, how do you build a new index on a live production table without locking concurrent writes?",
+      "opts": [
+        "Use `CREATE INDEX CONCURRENTLY`",
+        "Shut down the application for 3 hours while running `DROP TABLE`",
+        "Restart the database every 10 seconds"
+      ],
+      "ans": 0,
+      "why": "`CREATE INDEX CONCURRENTLY` builds the index without acquiring locks that block concurrent inserts, updates, or deletes."
+    },
+    {
+      "id": "db-sn-socket-leak",
+      "shortTag": "SocketLeak",
+      "title": "Created New DB Connection Pool Inside Every HTTP Request",
+      "quip": "\"Called `sqlalchemy.create_engine()` inside the Flask route function instead of module scope—leaked 200 connection pools in 30 seconds!\"",
+      "tip": "Always instantiate database connection pools once in global/module scope so warm container instances reuse connections.",
+      "prevent": "Initialize the connection pool in global scope outside the request handler and set `pool_size` / `max_overflow` limits.",
+      "detect": "Database connection count climbing linearly with each HTTP request until connections are refused.",
+      "recover": "Move `create_engine()` / pool initialization to global module scope and deploy the fix.",
+      "docLabel": "Cloud SQL Connection Pooling",
+      "docUrl": "https://cloud.google.com/sql/docs/postgres/manage-connections",
+      "q": "Why must a database connection pool be declared in global/module scope in Cloud Run or Cloud Run functions?",
+      "opts": [
+        "So a warm container instance reuses the same pool across thousands of requests instead of leaking a new pool on every request",
+        "Global variables are encrypted in RAM",
+        "Local variables cannot store strings"
+      ],
+      "ans": 0,
+      "why": "Per-request pool creation defeats connection pooling completely and rapidly exhausts database sockets."
+    },
+    {
+      "id": "db-sn-stampede",
+      "shortTag": "Stampede",
+      "title": "Cache Stampede When Hot Homepage Key Expired at Midnight",
+      "quip": "\"The cached homepage payload expired at `00:00:00`—8,000 concurrent requests all missed Memorystore at the same millisecond and stampeded the DB!\"",
+      "tip": "Use request coalescing (singleflight / mutex lock), jittered TTLs, or proactive background refresh for hot cache keys.",
+      "prevent": "Add random jitter to cache TTLs and use singleflight / lock coalescing so only 1 worker recomputes an expired hot key.",
+      "detect": "Periodic spikes in Memorystore cache-miss rate coinciding with sudden 100% DB CPU spikes.",
+      "recover": "Warm the hot cache keys proactively and deploy singleflight request coalescing with jittered TTLs.",
+      "docLabel": "Memorystore Best Practices",
+      "docUrl": "https://cloud.google.com/memorystore/docs/redis/general-best-practices",
+      "q": "How do you prevent a 'cache stampede' (thundering herd) when a popular Memorystore key's TTL expires under heavy traffic?",
+      "opts": [
+        "Use singleflight/mutex request coalescing (so only one worker queries the DB to repopulate the cache) and add random jitter to key TTLs",
+        "Disable caching completely",
+        "Set all cache TTLs to 1 millisecond"
+      ],
+      "ans": 0,
+      "why": "Coalescing concurrent cache misses into a single database lookup protects the database when a hot key expires."
+    },
+    {
+      "id": "db-sn-vacuum-block",
+      "shortTag": "XID Wrap",
+      "title": "Abandoned `idle in transaction` Session Blocked Postgres `AUTOVACUUM`",
+      "quip": "\"A developer's laptop left an uncommitted `BEGIN;` transaction open over the weekend—blocked `autovacuum` dead-tuple cleanup and spiked table bloat + XID age!\"",
+      "tip": "Set `idle_in_transaction_session_timeout` in PostgreSQL flags and monitor transaction ID (`XID`) age in Cloud Monitoring.",
+      "prevent": "Set `idle_in_transaction_session_timeout` (e.g., `60000` ms) and `statement_timeout` database flags.",
+      "detect": "Cloud Monitoring alert on `database/postgresql/transaction_id_utilization` and bloated dead-tuple counts.",
+      "recover": "Terminate the stuck session (`pg_terminate_backend`), let `VACUUM` reclaim dead tuples, and set `idle_in_transaction_session_timeout`.",
+      "docLabel": "PostgreSQL Vacuum & Transaction IDs",
+      "docUrl": "https://cloud.google.com/sql/docs/postgres/flags",
+      "q": "Which PostgreSQL database flag automatically terminates abandoned client sessions that sit `idle in transaction` holding snapshots open?",
+      "opts": [
+        "`idle_in_transaction_session_timeout`",
+        "`max_connections`",
+        "`work_mem`"
+      ],
+      "ans": 0,
+      "why": "Automatically closing abandoned `idle in transaction` sessions prevents them from blocking `autovacuum` and causing transaction ID wraparound."
+    },
+    {
+      "id": "db-sn-n-plus-1",
+      "shortTag": "N+1 RTT",
+      "title": "Cross-Region N+1 Chatty SQL Loop",
+      "quip": "\"Fetched 100 orders and then ran `SELECT * FROM users WHERE id = ?` 100 times in a `for` loop across regions—8 seconds of pure network RTT!\"",
+      "tip": "Replace N+1 query loops with a single `JOIN` or `WHERE id = ANY($1)` batch query, and co-locate compute in the database's region.",
+      "prevent": "Batch lookups using `JOIN` or `ANY($1)` and deploy compute in the same region as the database (or local read replica).",
+      "detect": "Cloud Trace waterfall showing 100+ sequential short SQL spans per HTTP request.",
+      "recover": "Refactor the N+1 loop into a single batched SQL query and co-locate compute and database regions.",
+      "docLabel": "Cloud SQL Performance Tips",
+      "docUrl": "https://cloud.google.com/sql/docs/postgres/diagnose-issues",
+      "q": "Why does executing 100 sequential 1ms SQL queries from `us-east1` against a database in `europe-west1` take over 7 seconds?",
+      "opts": [
+        "Each sequential query pays ~75ms of transatlantic network round-trip latency (`100 × 75ms = 7.5s`); batch into 1 query and co-locate regions",
+        "PostgreSQL pauses for 75ms after every semicolon",
+        "Fiber-optic cables only transmit 1 query per second"
+      ],
+      "ans": 0,
+      "why": "Eliminating N+1 round-trips and co-locating compute with data reduces 100 network hops to 1 local hop."
+    },
+    {
+      "id": "db-sn-no-interleave",
+      "shortTag": "Split Join",
+      "title": "Un-Interleaved Parent-Child Tables in Spanner",
+      "quip": "\"Stored `Invoices` and `InvoiceLines` as top-level independent tables in Spanner—every invoice lookup required cross-machine distributed joins!\"",
+      "tip": "Declare child tables with `INTERLEAVE IN PARENT` in Cloud Spanner when they are predominantly accessed by parent primary key.",
+      "prevent": "Design hierarchical entities with composite keys `(parent_id, child_id)` and `INTERLEAVE IN PARENT`.",
+      "detect": "Spanner Query Execution Plans showing high cross-split distributed join latency on parent-child queries.",
+      "recover": "Migrate the child table to an interleaved schema (`INTERLEAVE IN PARENT`) so child rows co-locate with their parent.",
+      "docLabel": "Spanner Interleaved Tables",
+      "docUrl": "https://cloud.google.com/spanner/docs/schema-and-data-model",
+      "q": "What is the performance drawback of keeping tightly coupled parent and child tables non-interleaved in Cloud Spanner?",
+      "opts": [
+        "Parent and child rows are stored in separate splits potentially on different servers, requiring network RPCs during joins",
+        "Spanner blocks `JOIN` syntax on non-interleaved tables",
+        "Non-interleaved tables cannot have indexes"
+      ],
+      "ans": 0,
+      "why": "Interleaving physically co-locates parent and child rows on the same split, turning joins into fast local reads."
+    },
+    {
+      "id": "db-sn-fs-unbounded",
+      "shortTag": "Read Bill",
+      "title": "Unbounded Firestore Collection Listener Without `.limit()`",
+      "quip": "\"Attached an unfiltered `onSnapshot(collection(db, 'messages'))` listener in the web app—every user opening the page downloaded all 80,000 historical messages!\"",
+      "tip": "Always bound Firestore queries and real-time listeners with `.orderBy(...).limit(N)` and cursor pagination (`startAfter`).",
+      "prevent": "Enforce `.limit(N)` on all client queries and validate `request.query.limit <= 100` inside Firestore Security Rules!",
+      "detect": "Cloud Monitoring `firestore.googleapis.com/document/read_count` spiking disproportionately to active users.",
+      "recover": "Deploy `.limit(50)` with `startAfter` pagination in the client AND enforce `request.query.limit` in `firestore.rules`.",
+      "docLabel": "Firestore Paginate with Cursors",
+      "docUrl": "https://cloud.google.com/firestore/docs/query-data/query-cursors",
+      "q": "How can you enforce at the server level that a client cannot run an unbounded collection read in Firestore?",
+      "opts": [
+        "Check `request.query.limit <= 100` inside your `firestore.rules` security rules alongside `.limit()` in the client query",
+        "Hope users never scroll down",
+        "Rename the collection every hour"
+      ],
+      "ans": 0,
+      "why": "Enforcing `request.query.limit` in Firestore Security Rules guarantees even a modified client cannot request thousands of documents at once."
+    },
+    {
+      "id": "db-sn-cmek-revoke",
+      "shortTag": "CMEK Lock",
+      "title": "Revoked DB Service Agent Access to CMEK Encryption Key",
+      "quip": "\"An IAM cleanup script removed the Cloud SQL Service Agent from the Cloud KMS CMEK key—the database immediately lost access to its encrypted disks!\"",
+      "tip": "Protect Google Service Agent `cryptoKeyEncrypterDecrypter` bindings on CMEK keys and configure KMS key revocation action policies.",
+      "prevent": "Protect `service-PROJECT_NUMBER@...` Service Agent bindings on CMEK keys using IAM Deny exclusions.",
+      "detect": "Cloud Audit Logs KMS `PERMISSION_DENIED` alerts and Database Center CMEK health warnings.",
+      "recover": "Restore `roles/cloudkms.cryptoKeyEncrypterDecrypter` for the database Service Agent on the KMS key and restart/recover the instance.",
+      "docLabel": "Customer-Managed Encryption Keys (CMEK)",
+      "docUrl": "https://cloud.google.com/sql/docs/postgres/cmek",
+      "q": "What happens if the Cloud SQL or Spanner Service Agent loses `cryptoKeyEncrypterDecrypter` permission on its active Cloud KMS CMEK key?",
+      "opts": [
+        "The database service can no longer decrypt its storage keys, rendering the instance inaccessible until KMS permissions are restored",
+        "The database automatically switches to plaintext",
+        "Nothing happens until the year 2099"
+      ],
+      "ans": 0,
+      "why": "CMEK gives you ultimate cryptographic control—revoking the service agent's KMS access cuts off data decryption immediately."
+    },
+    {
+      "id": "db-sn-no-tls",
+      "shortTag": "No DB TLS",
+      "title": "Unencrypted Database Connections Without `requireSsl`",
+      "quip": "\"Connected to the database over a hybrid network without SSL/TLS enforcement—credentials and customer rows traveled in cleartext over the wire!\"",
+      "tip": "Enforce SSL/TLS (`requireSsl` / `ENCRYPTED_ONLY`) on all Cloud SQL and AlloyDB instances, or use the Cloud SQL Auth Proxy.",
+      "prevent": "Enforce Org Policy `sql.Concat` / `ENCRYPTED_ONLY` SSL mode and connect via Cloud SQL Auth Proxy.",
+      "detect": "Security Command Center `SQL_UNENCRYPTED_CONNECTIONS` finding & Database Center posture checks.",
+      "recover": "Enable `ENCRYPTED_ONLY` SSL mode on the database and route clients through the Cloud SQL Auth Proxy.",
+      "docLabel": "Configure SSL/TLS for Cloud SQL",
+      "docUrl": "https://cloud.google.com/sql/docs/postgres/configure-ssl-instance",
+      "q": "How do you guarantee that a Cloud SQL instance rejects any client attempting to connect without TLS encryption?",
+      "opts": [
+        "Set the instance SSL mode to `ENCRYPTED_ONLY` (or `TRUSTED_CLIENT_CERTIFICATE_REQUIRED`) and use the Cloud SQL Auth Proxy",
+        "Use port 80 instead of port 5432",
+        "Add `ssl=false` to the connection string"
+      ],
+      "ans": 0,
+      "why": "Enforcing `ENCRYPTED_ONLY` on the server ensures unencrypted connection handshakes are rejected immediately."
+    },
+    {
+      "id": "db-sn-bt-large-cell",
+      "shortTag": "50MB Cell",
+      "title": "Stored 50 MB PDF Blobs Inside Bigtable Cells",
+      "quip": "\"Tried to stuff raw 50 MB PDF files directly into Cloud Bigtable cells—blew past the 10 MB cell limit and choked tablet compactions!\"",
+      "tip": "Keep Cloud Bigtable cell values small (< 100 KB ideal, 10 MB hard limit); store large blobs in Cloud Storage and keep only the `gs://` URI in Bigtable.",
+      "prevent": "Store binary blobs/files in Cloud Storage and store only metadata and the `gs://` object URI in Bigtable.",
+      "detect": "Bigtable client `InvalidArgument` / oversized mutation errors and high tablet compaction latency.",
+      "recover": "Offload large payloads to Cloud Storage buckets and replace the cell contents with `gs://` URI references.",
+      "docLabel": "Bigtable Schema Design Best Practices",
+      "docUrl": "https://cloud.google.com/bigtable/docs/schema-design",
+      "q": "How should you store 50 MB media or PDF files that need to be looked up via a Cloud Bigtable index?",
+      "opts": [
+        "Store the 50 MB file in Cloud Storage and store its `gs://` URI and metadata in the Bigtable row",
+        "Base64-encode the 50 MB file into a single Bigtable cell",
+        "Split the PDF across 50,000 column family names"
+      ],
+      "ans": 0,
+      "why": "Bigtable is optimized for small cells (<100 KB); pairing Cloud Storage for blobs with Bigtable for fast metadata lookup gives the best of both worlds."
+    }
+  ],
+  "shields": [
+    { "id": "db-sh-center", "shortTag": "DB Center", "title": "Google Cloud Database Center", "quip": "\"Unified fleet health, HA posture, backup verification, and security recommendations across every DB in one console.\"", "tip": "Use Database Center to continuously audit HA, PITR backups, encryption, and performance across Cloud SQL, AlloyDB, Spanner, and Bigtable.", "docLabel": "Database Center Overview", "docUrl": "https://cloud.google.com/database-center/docs/overview" },
+    { "id": "db-sh-pitr", "shortTag": "PITR Logs", "title": "Point-in-Time Recovery (PITR)", "quip": "\"Continuous write-ahead log archival armed—ready to clone or rewind to any second within the retention window.\"", "tip": "Enable Point-in-Time Recovery (PITR) on Cloud SQL, AlloyDB, Spanner, and Firestore to recover from accidental deletes.", "docLabel": "Cloud SQL Point-in-Time Recovery", "docUrl": "https://cloud.google.com/sql/docs/postgres/backup-recovery/pitr" },
+    { "id": "db-sh-iam-auth", "shortTag": "IAM DBAuth", "title": "IAM Database Authentication", "quip": "\"Short-lived OAuth2 IAM tokens replaced static database passwords across every microservice.\"", "tip": "Enable IAM database authentication on Cloud SQL and AlloyDB to eliminate password rotation toil.", "docLabel": "Cloud SQL IAM Authentication", "docUrl": "https://cloud.google.com/sql/docs/postgres/iam-authentication" },
+    { "id": "db-sh-key-vis", "shortTag": "KeyVisualz", "title": "Spanner & Bigtable Key Visualizer", "quip": "\"Spotted an asymmetric read/write hotspot on a key prefix before it ever breached our latency SLO!\"", "tip": "Inspect Key Visualizer heatmaps regularly on Spanner, Bigtable, and Firestore to catch hotspotting early.", "docLabel": "Key Visualizer Overview", "docUrl": "https://cloud.google.com/bigtable/docs/key-visualizer" },
+    { "id": "db-sh-qry-ins", "shortTag": "QryInsight", "title": "Query Insights & Index Advisor", "quip": "\"Pinpointed the exact microservice tag and SQL statement causing lock waits in 15 seconds.\"", "tip": "Use Query Insights and Index Advisor on Cloud SQL and AlloyDB to trace slow queries with OpenTelemetry tags.", "docLabel": "Using Query Insights", "docUrl": "https://cloud.google.com/sql/docs/postgres/using-query-insights" },
+    { "id": "db-sh-conn-pool", "shortTag": "Conn Pool", "title": "Managed Connection Pooling / PgBouncer", "quip": "\"Multiplexed 2,000 serverless client connections smoothly over 50 warm PostgreSQL backend processes.\"", "tip": "Use connection pooling to protect relational databases from serverless connection spikes.", "docLabel": "Manage Database Connections", "docUrl": "https://cloud.google.com/sql/docs/postgres/manage-connections" },
+    { "id": "db-sh-span-auto", "shortTag": "SpannrAuto", "title": "Cloud Spanner Managed Autoscaler", "quip": "\"Spanner scaled processing units up ahead of high-priority CPU thresholds and scaled back down overnight.\"", "tip": "Enable Managed Autoscaler on Cloud Spanner to keep high-priority CPU utilization within target bounds automatically.", "docLabel": "Spanner Managed Autoscaler", "docUrl": "https://cloud.google.com/spanner/docs/autoscaling-overview" },
+    { "id": "db-sh-del-prot", "shortTag": "DelProtect", "title": "Database Deletion Protection Flag", "quip": "\"Blocked an accidental `terraform destroy` from wiping the production database instance!\"", "tip": "Enable `--deletion-protection` on all production Cloud SQL, AlloyDB, Spanner, and Bigtable instances.", "docLabel": "Prevent Accidental DB Deletion", "docUrl": "https://cloud.google.com/sql/docs/postgres/deletion-protection" },
+    { "id": "db-sh-psc", "shortTag": "PSC DB End", "title": "Private Service Connect DB Endpoints", "quip": "\"Connected app VPCs privately to AlloyDB and Cloud SQL without VPC peering or overlapping CIDR issues.\"", "tip": "Use Private Service Connect (PSC) endpoints to connect to Cloud SQL and AlloyDB privately across VPCs.", "docLabel": "Connect via Private Service Connect", "docUrl": "https://cloud.google.com/sql/docs/postgres/configure-private-service-connect" },
+    { "id": "db-sh-fs-rules", "shortTag": "Rules Test", "title": "Firestore Security Rules + Emulator Suite", "quip": "\"CI unit tests verified every path, ownership check, and `request.query.limit` constraint before deploy.\"", "tip": "Test Firestore Security Rules against the local Emulator Suite in CI and enforce query limits and schema types.", "docLabel": "Firestore Security Rules", "docUrl": "https://cloud.google.com/firestore/docs/security/get-started" },
+    { "id": "db-sh-bt-route", "shortTag": "BT Routing", "title": "Bigtable Multi-Cluster App Profiles", "quip": "\"Multi-cluster routing automatically failed over live reads and writes when a zone had maintenance.\"", "tip": "Use Multi-Cluster Routing in Bigtable App Profiles for automatic high-availability failover across clusters.", "docLabel": "Bigtable Replication & Routing", "docUrl": "https://cloud.google.com/bigtable/docs/replication-overview" },
+    { "id": "db-sh-redis-ha", "shortTag": "Redis HA", "title": "Memorystore Multi-Zone High Availability", "quip": "\"Cross-zone replica promoted in seconds with zero cache cold-start during zonal maintenance.\"", "tip": "Deploy Memorystore with multi-zone read replicas / cluster HA to keep cache hit rates high during zone events.", "docLabel": "Memorystore High Availability", "docUrl": "https://cloud.google.com/memorystore/docs/redis/high-availability" },
+    { "id": "db-sh-vault", "shortTag": "Vault Lock", "title": "Backup and DR Locked Immutable Vault", "quip": "\"Enforced retention locks on database backups—immutable even if project admin credentials are compromised.\"", "tip": "Store critical database backups in Backup and DR Service with locked minimum retention periods.", "docLabel": "Backup and DR Service", "docUrl": "https://cloud.google.com/backup-disaster-recovery/docs/concepts/backup-dr" },
+    { "id": "db-sh-row-ttl", "shortTag": "Row TTL", "title": "Spanner & Bigtable Row TTL Policies", "quip": "\"Expired session and audit rows purged automatically in the background at low priority—zero manual delete spikes!\"", "tip": "Use built-in Row Time-to-Live (TTL) policies in Spanner, Firestore, and Bigtable to expire stale data automatically.", "docLabel": "Spanner Time to Live (TTL)", "docUrl": "https://cloud.google.com/spanner/docs/ttl" },
+    { "id": "db-sh-no-pub-sql", "shortTag": "NoPubSQL", "title": "Org Policy `sql.restrictAuthorizedNetworks`", "quip": "\"Prevented public IP allowlists on every Cloud SQL instance across the entire organization folder tree.\"", "tip": "Enforce `constraints/sql.restrictAuthorizedNetworks` and `sql.restrictPublicIp` via Organization Policy.", "docLabel": "Cloud SQL Org Policies", "docUrl": "https://cloud.google.com/sql/docs/postgres/org-policy/org-policy" },
+    { "id": "db-sh-autokey", "shortTag": "KMS Autoky", "title": "Cloud KMS Autokey CMEK for Databases", "quip": "\"Automated per-database CMEK key provisioning with separation of duties and scheduled rotation.\"", "tip": "Use Cloud KMS Autokey to provision compliant Customer-Managed Encryption Keys (CMEK) for every database.", "docLabel": "Cloud KMS Autokey Overview", "docUrl": "https://cloud.google.com/kms/docs/autokey-overview" }
+  ]
+}

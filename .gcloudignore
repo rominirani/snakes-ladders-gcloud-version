@@ -1,0 +1,10 @@
+.git
+.gitignore
+__pycache__/
+*.pyc
+README.md
+CUSTOMIZE.md
+GEMINI.md
+scripts/
+cover-illustration.jpg
+cover-illustration.png

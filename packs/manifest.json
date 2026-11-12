@@ -1,0 +1,15 @@
+{
+  "defaultPack": "cloud-architect",
+  "packs": [
+    {
+      "id": "cloud-architect",
+      "name": "Cloud Architect Edition (220 Scenarios)",
+      "file": "packs/cloud-architect.json"
+    },
+    {
+      "id": "cloud-databases",
+      "name": "Google Cloud Databases Edition",
+      "file": "packs/cloud-databases.json"
+    }
+  ]
+}

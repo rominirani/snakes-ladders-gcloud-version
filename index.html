@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Strict CSP: no unsafe-inline, no unsafe-eval, self-hosted assets only -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none';">
+  <title>Snakes &amp; Ladders: Cloud Architect Edition</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="scenarios.js" defer></script>
+  <script src="game.js" defer></script>
+</head>
+<body>
+  <!--
+    TODO(security): Authentication, session cookies, CSRF tokens, database
+    parameterization, and file-upload validation are intentionally omitted
+    because this application is a local, stateless, client-side board game
+    with no user accounts, persistent backend storage, or file uploads.
+  -->
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="2" y="2" width="12" height="12" rx="3.5" class="mark-blue" />
+          <rect x="18" y="2" width="12" height="12" rx="3.5" class="mark-red" />
+          <rect x="2" y="18" width="12" height="12" rx="3.5" class="mark-yellow" />
+          <rect x="18" y="18" width="12" height="12" rx="3.5" class="mark-green" />
+        </svg>
+        <div class="brand-copy">
+          <div class="brand-title-row">
+            <h1 id="brand-title" class="brand-title">Snakes &amp; Ladders</h1>
+            <span id="edition-pill" class="edition-pill">Cloud Architect Edition</span>
+          </div>
+          <p id="brand-subtitle" class="brand-subtitle">Scale from <code>localhost</code> to <code>99.999%</code> SLA — solve architecture &amp; incident checks across 220 GCP scenarios.</p>
+        </div>
+      </div>
+
+      <div class="topbar-actions">
+        <label class="pack-select-wrap" for="pack-select">
+          <span class="sr-only">Edition Pack</span>
+          <select id="pack-select" class="pack-select" aria-label="Select Edition Pack" title="Switch question &amp; scenario pack">
+            <option value="cloud-architect">Cloud Architect Edition (220)</option>
+            <option value="cloud-databases">Google Cloud Databases Edition (54)</option>
+          </select>
+        </label>
+        <div class="mode-group" role="group" aria-label="Game Mode">
+          <button type="button" class="seg-btn is-active" data-mode="solo">Learning Mode (Solo)</button>
+          <button type="button" class="seg-btn" data-mode="bot">1P vs Bot</button>
+        </div>
+        <button type="button" id="btn-sound" class="ghost-btn" aria-pressed="true" title="Toggle Web Audio effects">Sound: On</button>
+        <button type="button" id="btn-theme" class="ghost-btn" title="Switch light or dark appearance">Theme: Light</button>
+        <button type="button" id="btn-rules" class="ghost-btn">How to Play</button>
+        <button type="button" id="btn-reset" class="secondary-btn" title="Generate a brand-new randomized board and restart">New Random Board</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="board-panel" aria-label="Game Board">
+        <div class="board-frame">
+          <svg id="board-svg" class="board-svg" viewBox="-42 -14 1056 1028" role="img" aria-label="10 by 10 Snakes and Ladders Google Cloud board">
+          </svg>
+        </div>
+        <div class="board-legend">
+          <span class="legend-item">
+            <span class="legend-dot dot-ladder"></span>
+            <span><strong>Cloud Uplink:</strong> Design check → climb + bonus roll</span>
+          </span>
+          <span class="legend-item">
+            <span class="legend-dot dot-snake"></span>
+            <span><strong>SEV-1 Outage:</strong> Triage or Shield → Prevent / Detect / Recover</span>
+          </span>
+          <span class="legend-item">
+            <span class="legend-dot dot-shield"></span>
+            <span><strong>SRE Shield:</strong> Instant SEV-1 block (max 2)</span>
+          </span>
+          <span class="legend-hint">Click any highlighted square to inspect its debrief &amp; docs.</span>
+        </div>
+      </section>
+
+      <aside class="side-panel">
+        <!-- Dice & Players Card -->
+        <section class="card control-card" aria-label="Turn Controls and Scoreboard">
+          <div class="turn-header">
+            <div>
+              <span id="mode-eyebrow" class="eyebrow">Learning Mode · Solo Run</span>
+              <h2 id="turn-title" class="turn-title">Ready to Deploy</h2>
+            </div>
+            <span id="turn-status-pill" class="status-pill">Roll 1</span>
+          </div>
+
+          <div class="dice-row">
+            <button type="button" id="die-btn" class="die-stage" aria-label="Roll Die">
+              <svg id="die-svg" class="die-svg" viewBox="0 0 64 64" aria-hidden="true"></svg>
+            </button>
+            <div class="dice-cta">
+              <button type="button" id="roll-btn" class="primary-btn">
+                <span id="roll-btn-label">Roll Die</span>
+                <kbd id="roll-key-hint" class="key-hint">Space</kbd>
+              </button>
+              <p id="roll-caption" class="roll-caption">Pass design checks on Ladders to climb, and triage SEV-1 Snakes to hold your ground!</p>
+            </div>
+          </div>
+
+          <div id="players-list" class="players-list" aria-live="polite"></div>
+        </section>
+
+        <!-- Architecture Spotlight & Incident Debrief Card -->
+        <section class="card spotlight-card" aria-label="Cloud Architecture Spotlight" aria-live="polite">
+          <div class="spotlight-top">
+            <span id="spot-badge" class="spot-badge badge-neutral">SANDBOX ORIGIN</span>
+            <span id="spot-jump" class="spot-jump">Square 1</span>
+          </div>
+          <h3 id="spot-title" class="spot-title">localhost:8080 Prototype</h3>
+          <p id="spot-quip" class="spot-quip">"Every legendary distributed system starts as a humble prototype running on port 8080."</p>
+
+          <!-- Standard Takeaway (Ladders, Shields, Milestones) -->
+          <div id="spot-tip-box" class="spot-tip-box">
+            <span class="spot-tip-label">Cloud Architect Takeaway</span>
+            <p id="spot-tip" class="spot-tip">Start every project with a clean resource hierarchy, least-privilege IAM roles, and Cloud Billing Budgets.</p>
+          </div>
+
+          <!-- 3-Part Outage Debrief (Prevent / Detect / Recover for Snakes) -->
+          <div id="spot-debrief-box" class="debrief-stack is-hidden">
+            <div class="debrief-row">
+              <span class="debrief-pill pill-prevent">PREVENT</span>
+              <span id="spot-prevent" class="debrief-text"></span>
+            </div>
+            <div class="debrief-row">
+              <span class="debrief-pill pill-detect">DETECT</span>
+              <span id="spot-detect" class="debrief-text"></span>
+            </div>
+            <div class="debrief-row">
+              <span class="debrief-pill pill-recover">RECOVER</span>
+              <span id="spot-recover" class="debrief-text"></span>
+            </div>
+          </div>
+
+          <div class="spot-doc-row">
+            <a id="spot-doc-link" class="doc-link" href="https://cloud.google.com/docs/overview" target="_blank" rel="noopener noreferrer">
+              <span id="spot-doc-text">Learn more: Google Cloud Overview</span>
+              <span aria-hidden="true">↗</span>
+            </a>
+          </div>
+        </section>
+
+        <!-- Cloud Logging Stream Card -->
+        <section class="card logs-card" aria-label="Cloud Logging Event Stream">
+          <div class="logs-header">
+            <div class="logs-title-wrap">
+              <span class="logs-dot"></span>
+              <h3 class="logs-title">Cloud Logging</h3>
+            </div>
+            <span id="board-seed-tag" class="logs-filter">Topology #1</span>
+          </div>
+          <ul id="logs-list" class="logs-list" aria-live="polite"></ul>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <!-- Learning Mode Interactive Challenge & Debrief Modal -->
+  <div id="challenge-modal" class="modal-backdrop is-hidden" role="dialog" aria-modal="true" aria-labelledby="challenge-title">
+    <div class="modal-card challenge-card">
+      <div class="modal-header">
+        <div>
+          <span id="challenge-eyebrow" class="eyebrow">Architecture Review</span>
+          <h2 id="challenge-title" class="modal-title">Scenario Check</h2>
+        </div>
+        <span id="challenge-jump-pill" class="spot-jump"></span>
+      </div>
+
+      <div class="modal-body">
+        <p id="challenge-quip" class="spot-quip"></p>
+
+        <!-- Optional instant SRE Shield bypass when hitting a Snake with a banked shield -->
+        <div id="challenge-shield-bar" class="shield-bypass-bar is-hidden">
+          <div class="shield-bypass-copy">
+            <strong id="challenge-shield-label">SRE Shield Armed</strong>
+            <span>Deploy your shield for a guaranteed block, or save it and triage the incident below.</span>
+          </div>
+          <button type="button" id="btn-challenge-shield" class="primary-btn shield-action-btn">Deploy Shield</button>
+        </div>
+
+        <div class="challenge-prompt-box">
+          <p id="challenge-question" class="challenge-question"></p>
+          <div id="challenge-options" class="challenge-options" role="group" aria-label="Answer choices"></div>
+        </div>
+
+        <!-- Post-answer explanation & Prevent/Detect/Recover debrief -->
+        <div id="challenge-feedback" class="challenge-feedback is-hidden" aria-live="polite">
+          <div id="challenge-verdict" class="verdict-banner"></div>
+          <p id="challenge-rationale" class="challenge-rationale"></p>
+
+          <div id="challenge-debrief" class="debrief-stack is-hidden">
+            <div class="debrief-row">
+              <span class="debrief-pill pill-prevent">PREVENT</span>
+              <span id="challenge-prevent" class="debrief-text"></span>
+            </div>
+            <div class="debrief-row">
+              <span class="debrief-pill pill-detect">DETECT</span>
+              <span id="challenge-detect" class="debrief-text"></span>
+            </div>
+            <div class="debrief-row">
+              <span class="debrief-pill pill-recover">RECOVER</span>
+              <span id="challenge-recover" class="debrief-text"></span>
+            </div>
+          </div>
+
+          <div class="spot-doc-row">
+            <a id="challenge-doc-link" class="doc-link" href="https://cloud.google.com/docs/overview" target="_blank" rel="noopener noreferrer">
+              <span id="challenge-doc-text">Read Official Documentation</span>
+              <span aria-hidden="true">↗</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div id="challenge-footer" class="modal-footer is-hidden">
+        <button type="button" id="btn-challenge-continue" class="primary-btn">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1P vs Bot SRE Shield Decision Modal (with Prevent/Detect/Recover Debrief) -->
+  <div id="shield-modal" class="modal-backdrop is-hidden" role="dialog" aria-modal="true" aria-labelledby="shield-modal-title">
+    <div class="modal-card shield-decision-card">
+      <div class="modal-header">
+        <div>
+          <span id="shield-modal-eyebrow" class="eyebrow eyebrow-alert">SEV-1 Outage Detected</span>
+          <h2 id="shield-modal-title" class="modal-title">Incident Response</h2>
+        </div>
+      </div>
+      <div class="modal-body">
+        <p id="shield-modal-quip" class="spot-quip"></p>
+        <div class="debrief-stack">
+          <div class="debrief-row">
+            <span class="debrief-pill pill-prevent">PREVENT</span>
+            <span id="shield-modal-prevent" class="debrief-text"></span>
+          </div>
+          <div class="debrief-row">
+            <span class="debrief-pill pill-detect">DETECT</span>
+            <span id="shield-modal-detect" class="debrief-text"></span>
+          </div>
+          <div class="debrief-row">
+            <span class="debrief-pill pill-recover">RECOVER</span>
+            <span id="shield-modal-recover" class="debrief-text"></span>
+          </div>
+        </div>
+        <div class="spot-doc-row">
+          <a id="shield-modal-doc" class="doc-link" href="https://cloud.google.com/docs/overview" target="_blank" rel="noopener noreferrer">
+            <span id="shield-modal-doc-text">Read Official Documentation</span>
+            <span aria-hidden="true">↗</span>
+          </a>
+        </div>
+        <p id="shield-modal-prompt" class="shield-choice-prompt"></p>
+      </div>
+      <div class="modal-footer shield-modal-actions">
+        <button type="button" id="btn-skip-shield" class="ghost-btn">Save Shield &amp; Slide Down</button>
+        <button type="button" id="btn-use-shield" class="primary-btn shield-action-btn">Deploy SRE Shield</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- How to Play Modal -->
+  <div id="rules-modal" class="modal-backdrop is-hidden" role="dialog" aria-modal="true" aria-labelledby="rules-heading">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <span class="eyebrow">Architecture Runbook</span>
+          <h2 id="rules-heading" class="modal-title">How to Play</h2>
+        </div>
+        <button type="button" id="close-rules-btn" class="icon-close-btn" aria-label="Close rules">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="rule-grid">
+          <div class="rule-item">
+            <span class="rule-tag tag-blue">Learning Mode (Solo)</span>
+            <p>Play solo with zero bot wait! Land on a <strong>Ladder</strong> to answer a design check and climb (+ bonus roll). Land on a <strong>Snake</strong> to triage the outage and hold your square!</p>
+          </div>
+          <div class="rule-item">
+            <span class="rule-tag tag-red">Prevent · Detect · Recover</span>
+            <p>Every SEV-1 Outage includes an incident debrief breaking down which control <strong>prevents</strong> it, which only <strong>detects</strong> it, and how to <strong>recover</strong>.</p>
+          </div>
+          <div class="rule-item">
+            <span class="rule-tag tag-gold">SRE Shields (Guardrails)</span>
+            <p>Land on gold guardrail squares to bank up to <strong>2 SRE Shields</strong>. Deploy a shield on any Snake for a guaranteed instant block without risking a slide.</p>
+          </div>
+          <div class="rule-item">
+            <span class="rule-tag tag-green">1P vs Bot &amp; Bonus Rolls</span>
+            <p>Switch to <strong>1P vs Bot</strong> anytime for classic arcade racing against Chaos Bot. Rolling a <strong>6</strong> grants an Autoscaler bonus roll—unless you slide down a Snake!</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="got-it-rules-btn" class="primary-btn">Got It — Back to Console</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Victory Modal -->
+  <div id="win-modal" class="modal-backdrop is-hidden" role="dialog" aria-modal="true" aria-labelledby="win-heading">
+    <div class="modal-card win-card">
+      <div class="modal-header">
+        <div>
+          <span id="win-eyebrow" class="eyebrow">SLO Target Achieved · 99.999%</span>
+          <h2 id="win-heading" class="modal-title">Global Production Launch!</h2>
+        </div>
+      </div>
+      <div class="modal-body">
+        <p id="win-summary" class="win-summary"></p>
+        <div id="win-stats" class="win-stats-grid"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="inspect-board-btn" class="ghost-btn">Inspect Board</button>
+        <button type="button" id="play-again-btn" class="primary-btn">New Random Board</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
