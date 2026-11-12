@@ -1,0 +1,973 @@
+{
+  "meta": {
+    "id": "cloud-containers-serverless",
+    "title": "Snakes & Ladders",
+    "edition": "GKE & Serverless Edition",
+    "editionBadge": "GKE & Serverless Edition",
+    "subtitle": "Scale from a local Dockerfile to global GKE Autopilot & Cloud Run fleets — master autoscaling, service mesh, supply chain & probes.",
+    "version": "1.0.0",
+    "author": "Google Cloud Architecture",
+    "defaultDocHost": "docs.cloud.google.com",
+    "allowedDocHosts": [
+      "docs.cloud.google.com",
+      "cloud.google.com"
+    ],
+    "categories": [
+      "GKE Autopilot & Scaling",
+      "Cloud Run & Jobs",
+      "Service Mesh & Gateway",
+      "CI/CD & Supply Chain",
+      "Config & Secret Mgmt",
+      "Resilience & Probes"
+    ],
+    "tiers": [
+      "GLOBAL MESH",
+      "SUPPLY CHAIN",
+      "GKE AUTOPILOT",
+      "CLOUD RUN",
+      "LOCAL DOCKER"
+    ],
+    "milestones": {
+      "1": {
+        "shortTag": "Dockerfile",
+        "badge": "CONTAINER ORIGIN",
+        "jump": "Square 1",
+        "title": "Local Dockerfile & Port 8080 Prototype",
+        "quip": "\"It runs on my laptop with `docker run -p 8080:8080`—zero health probes, `:latest` tags, and big multi-region dreams.\"",
+        "tip": "Start with minimal distroless base images, stateless 12-factor configuration, explicit CPU/memory requests, and graceful SIGTERM handling.",
+        "docLabel": "GKE & Cloud Run Application Platform",
+        "docUrl": "https://docs.cloud.google.com/kubernetes-engine/docs/overview"
+      },
+      "100": {
+        "shortTag": "Global Mesh",
+        "badge": "MODERN APP NIRVANA",
+        "jump": "Square 100 · 99.999%",
+        "title": "Zero-Ops Global GKE & Cloud Run Fleet!",
+        "quip": "\"Multi-cluster GKE Gateway, sub-second Cloud Run scale-out, SLSA Level 3 Binary Authorization, and zero pod eviction pages.\"",
+        "tip": "World-class container platforms combine GKE Autopilot, Cloud Run Services/Jobs, Gateway API traffic management, Workload Identity, and practiced canary rollbacks.",
+        "docLabel": "GKE Multi-Cluster Gateway Overview",
+        "docUrl": "https://docs.cloud.google.com/kubernetes-engine/docs/how-to/deploying-multi-cluster-gateways"
+      }
+    }
+  },
+  "ladders": [
+    {
+      "id": "cs-up-autopilot",
+      "shortTag": "Autopilot",
+      "category": "GKE Autopilot & Scaling",
+      "service": "Google Kubernetes Engine",
+      "title": "GKE Autopilot Pod-Based Billing & Hardened Nodes",
+      "quip": "\"Stopped paying for idle node slack and stopped patching worker VMs—you now pay strictly for running Pod vCPU and memory requests!\"",
+      "tip": "Use GKE Autopilot for fully managed node provisioning, pre-hardened security defaults, and per-Pod resource billing.",
+      "docLabel": "GKE Autopilot Overview",
+      "docUrl": "https://docs.cloud.google.com/kubernetes-engine/docs/concepts/autopilot-overview",
+      "q": "How does GKE Autopilot differ from GKE Standard in cluster operations and billing?",
+      "opts": [
+        "Google manages and hardens worker nodes automatically, and you are billed only for the vCPU, memory, and ephemeral storage requested by your running Pods",
+        "You must manually SSH into worker nodes every week to upgrade the Linux kernel and kubelet",
+        "Autopilot only supports Windows Server 2012 virtual machines without containers"
+      ],
+      "ans": 0,
+      "why": "GKE Autopilot eliminates node pool management and bin-packing waste by billing directly for Pod resource requests with enforced security baselines."
+    },
+    {
+      "id": "cs-up-nap",
+      "shortTag": "NodeAutoPrv",
+      "category": "GKE Autopilot & Scaling",
+      "service": "Google Kubernetes Engine",
+      "title": "GKE Compute Classes & Node Auto-Provisioning",
+      "quip": "\"GPU inference pods and high-memory jobs automatically provisioned dedicated right-sized node pools and scaled them to zero when finished.\"",
+      "tip": "Use Custom Compute Classes or Node Auto-Provisioning (NAP) to dynamically select optimal machine series (such as C3, N2, or Spot/GPU) based on Pod selectors.",
+      "docLabel": "About Custom Compute Classes in GKE",
+      "docUrl": "https://docs.cloud.google.com/kubernetes-engine/docs/concepts/about-custom-compute-classes",
+      "q": "What capability do GKE Custom Compute Classes provide when scheduling diverse workloads?",
+      "opts": [
+        "They force all Pods across the organization to run on a single e2-micro VM",
+        "They declaratively define fallback priorities across machine families, Spot VMs, and reservations so GKE provisions the best available compute automatically",
+        "They disable the Kubernetes scheduler and assign Pods randomly via DNS"
+      ],
+      "ans": 1,
+      "why": "Custom Compute Classes let platform teams define prioritized hardware/Spot fallback chains so GKE automatically provisions optimal nodes as capacity demands shift."
+    },
+    {
+      "id": "cs-up-multidim-hpa",
+      "shortTag": "HPA + VPA",
+      "category": "GKE Autopilot & Scaling",
+      "service": "Google Kubernetes Engine",
+      "title": "Multidimensional Pod Autoscaling (HPA + VPA)",
+      "quip": "\"Scaled replicas horizontally on Pub/Sub queue depth while VPA right-sized memory requests automatically!\"",
+      "tip": "Combine Horizontal Pod Autoscaler (scaling replica count on CPU or custom metrics) with Vertical Pod Autoscaler for memory sizing, or use Multidimensional Pod Autoscaler.",
+      "docLabel": "Multidimensional Pod Autoscaling",
+      "docUrl": "https://docs.cloud.google.com/kubernetes-engine/docs/how-to/multidimensional-pod-autoscaling",
+      "q": "When combining horizontal and vertical scaling on the same Deployment in GKE, how do you prevent HPA and VPA from fighting each other?",
+      "opts": [
+        "Configure HPA and VPA to both scale replica count and CPU limits simultaneously every second",
+        "Delete all resource requests from the Pod spec",
+        "Use Multidimensional Pod Autoscaler (or scale horizontally on CPU/custom requests while VPA manages memory requests in recommendation/auto mode)"
+      ],
+      "ans": 2,
+      "why": "If HPA and VPA both react to the same CPU utilization signal independently, they conflict; separating dimensions (HPA on CPU/custom metrics, VPA on memory) or using Multidimensional Pod Autoscaler coordinates both."
+    },
+    {
+      "id": "cs-up-image-stream",
+      "shortTag": "ImgStream",
+      "category": "GKE Autopilot & Scaling",
+      "service": "Google Kubernetes Engine",
+      "title": "GKE Image Streaming from Artifact Registry",
+      "quip": "\"A 4 GB ML inference container booted in 3 seconds instead of 90 seconds by streaming layers on demand over the network!\"",
+      "tip": "Enable Image Streaming on GKE with Artifact Registry in the same region so containers start before downloading the entire image tarball.",
+      "docLabel": "Use Image Streaming on GKE",
+      "docUrl": "https://docs.cloud.google.com/kubernetes-engine/docs/how-to/image-streaming",
+      "q": "How does GKE Image Streaming reduce Pod startup latency for large container images?",
+      "opts": [
+        "It mounts container layers over a virtual filesystem from Artifact Registry and fetches only the blocks actually read during startup while streaming the rest in the background",
+        "It deletes all shared libraries larger than 10 MB from the container image",
+        "It emails the container image as a ZIP attachment to each node"
+      ],
+      "ans": 0,
+      "why": "Image Streaming overlays eligible Artifact Registry layers via a network mount so the container entrypoint starts immediately using only the few megabytes needed at boot."
+    },
+    {
+      "id": "cs-up-crun-svc",
+      "shortTag": "Cloud Run",
+      "category": "Cloud Run & Jobs",
+      "service": "Cloud Run",
+      "title": "Cloud Run High-Concurrency Request Autoscaling",
+      "quip": "\"Each container instance served 80 concurrent HTTP/2 requests—scaled from 0 to 400 instances in seconds during peak traffic!\"",
+      "tip": "Tune `--concurrency` on Cloud Run Services for stateless I/O-bound APIs so fewer container instances handle more simultaneous requests at lower cost.",
+      "docLabel": "Set Maximum Concurrent Requests per Instance",
+      "docUrl": "https://docs.cloud.google.com/run/docs/configuring/concurrency",
+      "q": "When should you lower `--concurrency` (e.g., to `1` or `4`) vs keep a higher concurrency (e.g., `80`) on a Cloud Run Service?",
+      "opts": [
+        "Always set `--concurrency=1000` for single-threaded CPU-bound video transcoding",
+        "Use higher concurrency (`80+`) for thread-safe, async I/O-bound APIs, and lower concurrency (`1`–`4`) for CPU-bound, memory-heavy, or non-thread-safe workloads",
+        "Concurrency settings only change the font size in Cloud Logging"
+      ],
+      "ans": 1,
+      "why": "High concurrency multiplexes I/O wait time efficiently on async web servers, whereas CPU-heavy or non-thread-safe code needs low concurrency to avoid contention or OOMs."
+    },
+    {
+      "id": "cs-up-crun-jobs",
+      "shortTag": "CRun Jobs",
+      "category": "Cloud Run & Jobs",
+      "service": "Cloud Run",
+      "title": "Cloud Run Jobs with Parallel Array Tasks (`CLOUD_RUN_TASK_INDEX`)",
+      "quip": "\"Sharded a nightly 2-hour billing reconciliation across 100 parallel Cloud Run Job tasks—completed in 90 seconds with zero idle VMs!\"",
+      "tip": "Use Cloud Run Jobs with `--tasks=N` and the injected `CLOUD_RUN_TASK_INDEX` environment variable to partition batch datasets across parallel containers.",
+      "docLabel": "Create and Execute Cloud Run Jobs",
+      "docUrl": "https://docs.cloud.google.com/run/docs/create-jobs",
+      "q": "How does each parallel container instance in a multi-task Cloud Run Job know which shard of work to process?",
+      "opts": [
+        "It reads the built-in `CLOUD_RUN_TASK_INDEX` and `CLOUD_RUN_TASK_COUNT` environment variables injected automatically into each task container",
+        "It listens on HTTP port 80 for a load balancer cookie",
+        "All tasks must process the exact same rows and overwrite each other"
+      ],
+      "ans": 0,
+      "why": "Cloud Run Jobs inject `CLOUD_RUN_TASK_INDEX` (`0..N-1`) and `CLOUD_RUN_TASK_COUNT` (`N`) so each task deterministically processes its own slice."
+    },
+    {
+      "id": "cs-up-cpu-boost",
+      "shortTag": "CPU Boost",
+      "category": "Cloud Run & Jobs",
+      "service": "Cloud Run",
+      "title": "Cloud Run Startup CPU Boost & Warm `--min-instances`",
+      "quip": "\"Enabled Startup CPU Boost and 2 warm `--min-instances`—Java Spring Boot cold-start p99 dropped by 65%!\"",
+      "tip": "Enable `--cpu-boost` on Cloud Run to temporarily double/increase vCPU during container initialization and pair with `--min-instances` for latency-sensitive APIs.",
+      "docLabel": "Configure Startup CPU Boost in Cloud Run",
+      "docUrl": "https://docs.cloud.google.com/run/docs/configuring/services/cpu",
+      "q": "What does enabling Startup CPU Boost (`--cpu-boost`) do on a Cloud Run Service?",
+      "opts": [
+        "It permanently triples the memory limit of the container for 30 days",
+        "It disables TLS encryption on the load balancer",
+        "It temporarily allocates extra vCPU during container instance startup and for a short period after the first request arrives, speeding up runtime/JIT initialization"
+      ],
+      "ans": 2,
+      "why": "Startup CPU Boost gives JVM, .NET, Node, and Python runtimes extra CPU headroom during class loading and JIT warm-up without paying for over-provisioned CPU all day."
+    },
+    {
+      "id": "cs-up-direct-vpc",
+      "shortTag": "Direct VPC",
+      "category": "Cloud Run & Jobs",
+      "service": "Cloud Run",
+      "title": "Cloud Run Direct VPC Egress (No Connector VM Bottleneck)",
+      "quip": "\"Switched from legacy Serverless VPC Access connectors to Direct VPC Egress—cut private AlloyDB & Redis latency while eliminating connector VM costs!\"",
+      "tip": "Use Direct VPC Egress on Cloud Run to send traffic directly into your VPC subnet with higher throughput, lower latency, and no intermediate connector VMs.",
+      "docLabel": "Direct VPC Egress with Cloud Run",
+      "docUrl": "https://docs.cloud.google.com/run/docs/configuring/vpc-direct-vpc",
+      "q": "What is the primary architectural advantage of Cloud Run Direct VPC Egress over a Serverless VPC Access connector?",
+      "opts": [
+        "Traffic flows directly from the Cloud Run container's network interface into your VPC subnet without traversing proxy connector VMs that incur fixed instance charges and bandwidth caps",
+        "It exposes every private VPC database directly to the public internet without authentication",
+        "It requires deploying a hardware router in your office"
+      ],
+      "ans": 0,
+      "why": "Direct VPC Egress assigns subnet IPs directly to Cloud Run instances, removing the throughput bottleneck and always-on VM cost of legacy VPC connectors."
+    },
+    {
+      "id": "cs-up-gateway-api",
+      "shortTag": "GKE Gateway",
+      "category": "Service Mesh & Gateway",
+      "service": "GKE Gateway API",
+      "title": "GKE Gateway API (`Gateway` + `HTTPRoute` Canary Weights)",
+      "quip": "\"Platform Ops owns the shared regional `Gateway` and TLS certs, while app teams safely shift 5% canary traffic in their own namespace `HTTPRoute`!\"",
+      "tip": "Adopt the Kubernetes Gateway API on GKE for role-oriented separation (`GatewayClass`, `Gateway`, `HTTPRoute`) and native weighted traffic splitting.",
+      "docLabel": "GKE Gateway Controller Overview",
+      "docUrl": "https://docs.cloud.google.com/kubernetes-engine/docs/concepts/gateway-api",
+      "q": "How does the Kubernetes Gateway API improve upon the legacy `Ingress` resource in multi-team GKE clusters?",
+      "opts": [
+        "It removes support for HTTPS certificates",
+        "It separates infrastructure ownership (`Gateway` managed by Platform/NetOps) from application routing (`HTTPRoute` managed by devs) with built-in header matching and weighted canary splits",
+        "It requires every developer to have Organization Admin permissions"
+      ],
+      "ans": 1,
+      "why": "Gateway API introduces role-oriented resources (`GatewayClass`, `Gateway`, `HTTPRoute`) and native traffic splitting, header routing, and cross-namespace attachment."
+    },
+    {
+      "id": "cs-up-csm-mtls",
+      "shortTag": "ServiceMesh",
+      "category": "Service Mesh & Gateway",
+      "service": "Cloud Service Mesh",
+      "title": "Cloud Service Mesh Managed Control Plane & Auto mTLS",
+      "quip": "\"Every east-west RPC is mutually authenticated with Mesh CA X.509 workload certificates and enforced by L7 `AuthorizationPolicy`!\"",
+      "tip": "Use Google-managed Cloud Service Mesh with Mesh CA to enforce zero-trust mTLS, L7 authorization policies, and golden-signal telemetry without operating your own Istio control plane.",
+      "docLabel": "Cloud Service Mesh Overview",
+      "docUrl": "https://docs.cloud.google.com/service-mesh/docs/overview",
+      "q": "How does Google-managed Cloud Service Mesh issue and rotate workload mTLS identities across GKE Pods?",
+      "opts": [
+        "Developers manually generate self-signed `.pem` files on their laptops and copy them via `kubectl cp`",
+        "It shares a single static password across all containers in the project",
+        "Mesh CA (or Certificate Authority Service) automatically issues and rotates short-lived SPIFFE X.509 certificates bound to each Pod's Kubernetes ServiceAccount via Workload Identity"
+      ],
+      "ans": 2,
+      "why": "Cloud Service Mesh automates short-lived SPIFFE certificate issuance and rotation tied to the workload's cryptographic identity (`spiffe://<project>.svc.id.goog/ns/<ns>/sa/<sa>`)."
+    },
+    {
+      "id": "cs-up-mc-gateway",
+      "shortTag": "MultiClust",
+      "category": "Service Mesh & Gateway",
+      "service": "GKE Enterprise Fleet",
+      "title": "GKE Multi-Cluster Gateway & `ServiceExport` Active-Active",
+      "quip": "\"Drained an entire `us-east1` GKE cluster for maintenance and global traffic seamlessly shifted to `us-central1` via Multi-Cluster Services!\"",
+      "tip": "Register clusters to a Fleet and use Multi-Cluster Gateway (`gke-l7-global-external-managed-mc`) with `ServiceExport`/`ServiceImport` for cross-region failover.",
+      "docLabel": "Multi-Cluster Gateways on GKE",
+      "docUrl": "https://docs.cloud.google.com/kubernetes-engine/docs/concepts/multi-cluster-gateway",
+      "q": "Which Kubernetes custom resource exposes a GKE `Service` across Fleet member clusters so a Multi-Cluster `HTTPRoute` can route to it?",
+      "opts": [
+        "`ServiceExport` (paired with the automatically reconciled `ServiceImport`)",
+        "`NodePortBroadcast`",
+        "`ConfigMapGlobal`"
+      ],
+      "ans": 0,
+      "why": "Creating a `ServiceExport` in member clusters registers backend NEGs with the Fleet so Multi-Cluster Services and Multi-Cluster Gateways can route across clusters."
+    },
+    {
+      "id": "cs-up-cloud-deploy",
+      "shortTag": "CloudDeploy",
+      "category": "CI/CD & Supply Chain",
+      "service": "Cloud Deploy",
+      "title": "Cloud Deploy Automated Canary Verification & 1-Click Rollback",
+      "quip": "\"Promoted `dev → staging → prod` with a 10% → 50% → 100% canary strategy and automated post-deploy verification jobs!\"",
+      "tip": "Use Google Cloud Deploy delivery pipelines with canary phases, approval gates, and verification jobs targeting both GKE and Cloud Run.",
+      "docLabel": "Cloud Deploy Canary Deployment Strategy",
+      "docUrl": "https://docs.cloud.google.com/deploy/docs/deployment-strategies/canary",
+      "q": "What happens in Google Cloud Deploy when an automated verification job fails during the 20% canary phase of a rollout?",
+      "opts": [
+        "It immediately promotes the broken build to 100% of production traffic anyway",
+        "The rollout halts at the failed phase without advancing to 100%, allowing a single-command or automated rollback to the previous known-good release",
+        "It deletes the entire GKE cluster"
+      ],
+      "ans": 1,
+      "why": "Cloud Deploy gates phase progression on verification results; if verification fails during a canary phase, progression stops and operators can roll back cleanly."
+    },
+    {
+      "id": "cs-up-binauthz",
+      "shortTag": "BinAuthz",
+      "category": "CI/CD & Supply Chain",
+      "service": "Binary Authorization",
+      "title": "Binary Authorization + SLSA Build & Scan Attestations",
+      "quip": "\"A rogue `kubectl run` with an unsigned Docker Hub image was blocked instantly at admission by Binary Authorization!\"",
+      "tip": "Enforce Binary Authorization on GKE and Cloud Run to require cryptographic attestations from Cloud Build and Artifact Analysis vulnerability policies.",
+      "docLabel": "Binary Authorization Overview",
+      "docUrl": "https://docs.cloud.google.com/binary-authorization/docs/overview",
+      "q": "How does Binary Authorization verify that a container image hasn't been tampered with after passing CI security checks?",
+      "opts": [
+        "It checks that the image tag string contains the word `safe`",
+        "It trusts any image pushed from a laptop with `docker push`",
+        "It validates cryptographic signatures (attestations) in Artifact Analysis against the immutable image digest (`@sha256:...`) using Cloud KMS public keys at admission time"
+      ],
+      "ans": 2,
+      "why": "Attestations are cryptographically signed over the immutable `@sha256` image digest, preventing tag-swap attacks and unauthorized images."
+    },
+    {
+      "id": "cs-up-ar-remote",
+      "shortTag": "AR Remote",
+      "category": "CI/CD & Supply Chain",
+      "service": "Artifact Registry",
+      "title": "Artifact Registry Remote & Virtual Repos with Immutable Tags",
+      "quip": "\"Cached upstream public base images inside a regional Artifact Registry Remote repo—immune to upstream rate limits and scanned for CVEs!\"",
+      "tip": "Use Artifact Registry Remote repositories to proxy/cache upstream registries (Docker Hub, Maven, PyPI) and combine them with private repos via Virtual repositories.",
+      "docLabel": "Artifact Registry Remote Repositories",
+      "docUrl": "https://docs.cloud.google.com/artifact-registry/docs/repositories/remote-repo",
+      "q": "What are the two major benefits of pulling public base images through an Artifact Registry Remote repository instead of directly from Docker Hub?",
+      "opts": [
+        "Upstream artifacts are cached regionally inside Google Cloud (avoiding external rate limits/egress) and automatically scanned by Artifact Analysis for vulnerabilities",
+        "It converts Python code into Rust automatically",
+        "It bypasses all IAM permissions in the organization"
+      ],
+      "ans": 0,
+      "why": "Remote repositories act as an authenticated, vulnerability-scanned regional pull-through cache for public package and container registries."
+    },
+    {
+      "id": "cs-up-wif-gke",
+      "shortTag": "GKE WIF",
+      "category": "Config & Secret Mgmt",
+      "service": "Workload Identity Federation",
+      "title": "Workload Identity Federation for GKE (Direct IAM Principal Binding)",
+      "quip": "\"Granted `roles/secretmanager.secretAccessor` directly to `principal://iam.googleapis.com/.../ns/payments/sa/checkout-sa`—zero JSON keys!\"",
+      "tip": "Grant IAM roles directly to Kubernetes ServiceAccount principals via Workload Identity Federation for GKE rather than exporting service account keys.",
+      "docLabel": "Workload Identity Federation for GKE",
+      "docUrl": "https://docs.cloud.google.com/kubernetes-engine/docs/how-to/workload-identity",
+      "q": "With modern Workload Identity Federation for GKE, what is the recommended way to grant a Kubernetes ServiceAccount access to a Cloud Storage bucket?",
+      "opts": [
+        "Create a downloadable service account JSON key and mount it as a Kubernetes Secret",
+        "Grant the IAM role directly to the Kubernetes ServiceAccount `principal://iam.googleapis.com/projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/PROJECT_ID.svc.id.goog/subject/ns/NAMESPACE/sa/KSA_NAME`",
+        "Grant `roles/owner` to the Compute Engine default node service account"
+      ],
+      "ans": 1,
+      "why": "Direct IAM bindings to the GKE Workload Identity pool principal eliminate both JSON keys and the need to manage intermediate IAM Service Account impersonation bindings."
+    },
+    {
+      "id": "cs-up-secret-csi",
+      "shortTag": "Secret CSI",
+      "category": "Config & Secret Mgmt",
+      "service": "Secret Manager",
+      "title": "Secret Manager CSI Driver & Cloud Run Secret Volume Mounts",
+      "quip": "\"Mounted pinned Secret Manager versions onto in-memory tmpfs volumes—zero secrets stored in etcd or leaked in environment dumps!\"",
+      "tip": "Mount secrets from Secret Manager as files (via the Secret Manager CSI Driver on GKE or Secret Volume Mounts on Cloud Run) instead of plaintext environment variables.",
+      "docLabel": "Use Secret Manager Add-on with GKE",
+      "docUrl": "https://docs.cloud.google.com/secret-manager/docs/secret-manager-managed-csi-component",
+      "q": "Why is mounting secrets as files from Secret Manager safer than injecting them as environment variables (`env:`)?",
+      "opts": [
+        "Environment variables are often accidentally logged in startup diagnostics, crash dumps, or child processes, whereas volume-mounted secrets stay off `os.environ` and can support rotation",
+        "Environment variables cannot store strings longer than 4 characters",
+        "Volume mounts automatically publish secrets to GitHub"
+      ],
+      "ans": 0,
+      "why": "Mounting secrets via the Secret Manager CSI driver or Cloud Run volume mounts avoids exposing secrets in process environment dumps and supports refreshing rotated secrets."
+    },
+    {
+      "id": "cs-up-startup-prb",
+      "shortTag": "StartupPrb",
+      "category": "Resilience & Probes",
+      "service": "GKE & Cloud Run",
+      "title": "Dedicated `startupProbe` + Lightweight `livenessProbe`",
+      "quip": "\"Separated slow 45-second cache warm-up into a `startupProbe` so `livenessProbe` stays fast without causing a restart death spiral!\"",
+      "tip": "Use `startupProbe` to accommodate slow initialization (migrations, model loading, JIT warm-up) and keep `livenessProbe` fast and local.",
+      "docLabel": "Configure Liveness, Readiness and Startup Probes",
+      "docUrl": "https://docs.cloud.google.com/run/docs/configuring/healthchecks",
+      "q": "How do `startupProbe`, `readinessProbe`, and `livenessProbe` work together during a container's lifecycle?",
+      "opts": [
+        "All three probes run in parallel from millisecond zero and kill the node if any fail",
+        "`livenessProbe` and `readinessProbe` wait until `startupProbe` succeeds; `readinessProbe` controls load-balancer traffic eligibility, while `livenessProbe` restarts deadlocked containers",
+        "`readinessProbe` deletes the container image from Artifact Registry on failure"
+      ],
+      "ans": 1,
+      "why": "`startupProbe` gates the start of `livenessProbe` so slow-starting apps aren't killed prematurely; `readinessProbe` removes overloaded pods from endpoints without restarting them."
+    },
+    {
+      "id": "cs-up-topology",
+      "shortTag": "TopoSpread",
+      "category": "Resilience & Probes",
+      "service": "Google Kubernetes Engine",
+      "title": "`topologySpreadConstraints` + `PodDisruptionBudget`",
+      "quip": "\"Replicas stayed balanced across 3 zones (`maxSkew: 1`) and `PodDisruptionBudget` guaranteed 80% availability during node upgrades!\"",
+      "tip": "Pair `topologySpreadConstraints` across `topology.kubernetes.io/zone` with a `PodDisruptionBudget` so neither zone outages nor voluntary drains take down your service.",
+      "docLabel": "Pod Topology Spread Constraints on GKE",
+      "docUrl": "https://docs.cloud.google.com/kubernetes-engine/docs/how-to/etus-pod-topology-spread",
+      "q": "What happens if you deploy 6 replicas in a regional GKE cluster without `topologySpreadConstraints` or pod anti-affinity?",
+      "opts": [
+        "GKE refuses to schedule more than 1 replica per region",
+        "Kubernetes automatically replicates pods across AWS and Azure",
+        "The scheduler may bin-pack all 6 replicas onto a single node or a single availability zone, creating a single point of failure during a zonal outage"
+      ],
+      "ans": 2,
+      "why": "Without explicit `topologySpreadConstraints` across `topology.kubernetes.io/zone`, bin-packing can place all replicas in one zone."
+    }
+  ],
+  "snakes": [
+    {
+      "id": "cs-sn-oomkill",
+      "shortTag": "OOMKilled",
+      "category": "GKE Autopilot & Scaling",
+      "service": "Google Kubernetes Engine",
+      "title": "Container `OOMKilled` (Exit 137) from Unbounded JVM/Node Heap",
+      "quip": "\"Set container memory limit to `1Gi` but forgot `-XX:MaxRAMPercentage=75.0`—the JVM allocated off-heap metaspace past 1 GiB and the kernel `OOMKilled` every pod under load!\"",
+      "tip": "Size language runtime heaps (`-XX:MaxRAMPercentage`, `--max-old-space-size`, `GOMEMLIMIT`) to 70%–80% of the container `resources.limits.memory` to leave headroom for off-heap/native memory.",
+      "prevent": "Set container-aware runtime heap limits (`-XX:MaxRAMPercentage=75.0` or `GOMEMLIMIT`) and set `resources.requests.memory == resources.limits.memory` (Guaranteed QoS for memory).",
+      "detect": "Cloud Monitoring alert on `kubernetes.io/container/memory/used_bytes` approaching limit and `reason: OOMKilled` (Exit Code 137) events.",
+      "recover": "Increase memory request/limit via VPA recommendations and cap runtime heap below the container cgroup limit.",
+      "docLabel": "GKE Best Practices: Resource Management",
+      "docUrl": "https://docs.cloud.google.com/kubernetes-engine/docs/best-practices/enterprise-multitenancy",
+      "q": "Why do Java, Node.js, or Go containers frequently get `OOMKilled` (exit code 137) even when their configured max heap size equals 100% of the container memory limit?",
+      "opts": [
+        "Runtimes also consume native off-heap memory (thread stacks, metaspace, direct byte buffers, GC overhead) inside the same cgroup limit; heap should be capped at ~70–80% of container memory",
+        "Kubernetes adds 5 GB of random log files into RAM every minute",
+        "Exit code 137 means DNS resolution succeeded"
+      ],
+      "ans": 0,
+      "why": "The Linux cgroup memory limit covers heap + thread stacks + native buffers + metaspace; leaving 20–30% headroom prevents kernel OOM kills."
+    },
+    {
+      "id": "cs-sn-cpu-throttle",
+      "shortTag": "CPUThrottl",
+      "category": "GKE Autopilot & Scaling",
+      "service": "Google Kubernetes Engine",
+      "title": "Aggressive CFS CPU Limit (`limits.cpu: 200m`) Spiked p99 Latency",
+      "quip": "\"Multi-threaded Go pods finished their 20ms CPU quota in the first 3ms of each 100ms Linux CFS period and sat throttled for the remaining 97ms!\"",
+      "tip": "Set accurate `resources.requests.cpu` so pods get guaranteed CPU shares, and avoid tight `resources.limits.cpu` on latency-sensitive multi-threaded services.",
+      "prevent": "Size `resources.requests.cpu` accurately for burst concurrency and omit or relax restrictive `limits.cpu` on GKE Standard latency-critical services.",
+      "detect": "Monitor `container_cpu_cfs_throttled_periods_total / container_cpu_cfs_periods_total` in Cloud Monitoring Managed Service for Prometheus.",
+      "recover": "Raise `requests.cpu` and remove or widen restrictive `limits.cpu` so multi-threaded request bursts are not paused by CFS quota enforcement.",
+      "docLabel": "Adjust Pod CPU and Memory Sizing",
+      "docUrl": "https://docs.cloud.google.com/kubernetes-engine/docs/concepts/verticalpodautoscaler",
+      "q": "Why can setting a low `resources.limits.cpu` (e.g., `200m`) on an 8-thread web server cause severe p99 latency spikes even when node CPU is 70% idle?",
+      "opts": [
+        "Kubernetes shuts down the network card whenever `limits.cpu` is set",
+        "All 8 threads burn through the 20ms per-100ms Linux CFS quota in a few milliseconds and the kernel throttles the container until the next 100ms period",
+        "Low CPU limits disable HTTPS encryption"
+      ],
+      "ans": 1,
+      "why": "Linux CFS enforces `limits.cpu` across all threads per 100ms window; parallel threads exhaust a small quota rapidly and stall for the remainder of the window."
+    },
+    {
+      "id": "cs-sn-subnet-exhaust",
+      "shortTag": "PodIP Full",
+      "category": "GKE Autopilot & Scaling",
+      "service": "Google Kubernetes Engine",
+      "title": "VPC-Native GKE Pod Secondary CIDR Range Exhausted (`/24`)",
+      "quip": "\"Configured a tiny `/24` secondary IP range for Pods—node autoscaling failed with `IP_SPACE_EXHAUSTED` because every node reserves a `/24` alias range!\"",
+      "tip": "Size GKE Pod secondary CIDR ranges generously (or use discontinuous multi-pod CIDR ranges and lower `--max-pods-per-node`) before scaling.",
+      "prevent": "Provision a `/17`–`/20` secondary Pod CIDR range (or reduce max Pods per node so each node reserves a `/25` or `/26` instead of a full `/24`).",
+      "detect": "Cloud Monitoring alert on `networking.googleapis.com/subnet/ip_utilization` and GKE Cluster Autoscaler `scale.up.error.ip.space.exhausted` events.",
+      "recover": "Add an additional Pod IP CIDR range to the cluster (`--additional-pod-ipv4-ranges`) without recreating the cluster.",
+      "docLabel": "VPC-Native Clusters & Alias IP Ranges",
+      "docUrl": "https://docs.cloud.google.com/kubernetes-engine/docs/concepts/alias-ips",
+      "q": "How can you expand Pod IP capacity on a live VPC-native GKE cluster when the initial Pod secondary CIDR range fills up?",
+      "opts": [
+        "Delete the entire VPC and rebuild production from scratch",
+        "Disable IP addresses and route Pods using MAC addresses across the internet",
+        "Add a new secondary IPv4 range to the subnet and attach it to the cluster or node pool using multi-Pod CIDR (`--additional-pod-ipv4-ranges`)"
+      ],
+      "ans": 2,
+      "why": "GKE supports adding discontinuous secondary Pod IPv4 ranges dynamically (`--additional-pod-ipv4-ranges`) and tuning `maxPodsPerNode` to reduce per-node CIDR block size."
+    },
+    {
+      "id": "cs-sn-single-zone",
+      "shortTag": "Zonal GKE",
+      "category": "GKE Autopilot & Scaling",
+      "service": "Google Kubernetes Engine",
+      "title": "Single-Zone GKE Cluster Outage During Control Plane Upgrade",
+      "quip": "\"Provisioned a zonal GKE Standard cluster in `us-central1-a`—control plane API paused during upgrades and a single zone impairment took down all nodes!\"",
+      "tip": "Always use Regional GKE clusters (or GKE Autopilot, which is regional by default) for production workloads so both the control plane and worker nodes span 3 zones.",
+      "prevent": "Provision Regional GKE Standard or GKE Autopilot clusters with multi-zone node locations.",
+      "detect": "GKE Security Posture and Architecture Framework checks flagging single-zone production clusters.",
+      "recover": "Stand up a Regional GKE cluster, register both to a GKE Fleet, shift traffic via Multi-Cluster Gateway or Cloud DNS, and retire the zonal cluster.",
+      "docLabel": "GKE Cluster Types: Regional vs Zonal",
+      "docUrl": "https://docs.cloud.google.com/kubernetes-engine/docs/concepts/types-of-clusters",
+      "q": "What happens to the Kubernetes API control plane during a master upgrade on a Zonal GKE cluster vs a Regional GKE cluster?",
+      "opts": [
+        "A Zonal cluster has a single control plane instance that is temporarily unavailable during upgrades, whereas a Regional cluster replicates the control plane across 3 zones for zero-downtime API availability",
+        "Regional clusters shut down all Pods during upgrades",
+        "Zonal clusters replicate their control plane across 12 continents"
+      ],
+      "ans": 0,
+      "why": "Regional GKE clusters run three control plane replicas across three zones in the region, keeping `kube-apiserver` andautoscalers online during upgrades and single-zone failures."
+    },
+    {
+      "id": "cs-sn-crun-bg-cpu",
+      "shortTag": "ThrottledBG",
+      "category": "Cloud Run & Jobs",
+      "service": "Cloud Run",
+      "title": "Background Async Task Frozen After HTTP `200 OK` Response",
+      "quip": "\"Returned `200 OK` immediately and spawned a background thread to upload the invoice—under default request-based billing, CPU was throttled to near-zero the millisecond the HTTP response finished!\"",
+      "tip": "Under Cloud Run request-based CPU billing (`--cpu-throttling`), never run background work after returning the HTTP response; either await completion, offload to Pub/Sub / Cloud Tasks, or enable `--no-cpu-throttling`.",
+      "prevent": "Offload async work to Cloud Tasks / Pub/Sub before returning the HTTP response, or enable instance-based billing (`--no-cpu-throttling`) if short background work is required.",
+      "detect": "Cloud Trace spans and logs showing background tasks freezing after HTTP response completion and finishing only when the next inbound request wakes the container.",
+      "recover": "Enable `--no-cpu-throttling` (CPU always allocated) immediately to unfreeze in-flight background threads, then refactor to Cloud Tasks or Pub/Sub.",
+      "docLabel": "CPU Allocation in Cloud Run",
+      "docUrl": "https://docs.cloud.google.com/run/docs/configuring/cpu-allocation",
+      "q": "Why did a background goroutine/thread started inside a Cloud Run HTTP handler stall right after the handler sent `200 OK`?",
+      "opts": [
+        "Go and Python threads are blocked by Cloud Armor",
+        "With default request-based CPU allocation (`--cpu-throttling`), Cloud Run throttles container CPU to near-zero whenever no HTTP request is actively being processed",
+        "Cloud Run deletes the container image after every HTTP status 200"
+      ],
+      "ans": 1,
+      "why": "By default, Cloud Run allocates CPU only while at least one request is open on the instance; post-response background work requires `--no-cpu-throttling` or an async queue like Cloud Tasks."
+    },
+    {
+      "id": "cs-sn-crun-conn-storm",
+      "shortTag": "DB Storm",
+      "category": "Cloud Run & Jobs",
+      "service": "Cloud Run",
+      "title": "Cloud Run Scaled to 800 Instances and Exhausted `max_connections`",
+      "quip": "\"Left `--max-instances` uncapped with a 10-connection SQL pool per container—a traffic surge opened 8,000 PostgreSQL connections and crashed the database!\"",
+      "tip": "Cap `--max-instances` on Cloud Run, keep per-instance DB pool sizes small (`1`–`5`), and route through managed connection pooling / PgBouncer.",
+      "prevent": "Set explicit `--max-instances`, size per-container DB pools so `max_instances × pool_size < DB max_connections`, and use PgBouncer / AlloyDB connection pooling.",
+      "detect": "Cloud Monitoring alert on `database/postgresql/num_backends` and Cloud Run `500` errors with `FATAL: remaining connection slots are reserved`.",
+      "recover": "Lower `--max-instances`, reduce the per-container SQL pool size to 2–5, and enable managed connection pooling.",
+      "docLabel": "Set Maximum Instances in Cloud Run",
+      "docUrl": "https://docs.cloud.google.com/run/docs/configuring/max-instances",
+      "q": "How do you prevent a sudden Cloud Run scale-out from exhausting a downstream Cloud SQL or AlloyDB database's connection limit?",
+      "opts": [
+        "Set the per-container connection pool size to 500",
+        "Disable autoscaling by setting `--max-instances=1` for all production traffic",
+        "Bound `--max-instances`, keep per-instance connection pools small, increase HTTP `--concurrency` per instance, and use a connection pooler like PgBouncer"
+      ],
+      "ans": 2,
+      "why": "Higher HTTP concurrency per instance reduces total container count, while bounded `--max-instances` and PgBouncer transaction pooling protect database connection limits."
+    },
+    {
+      "id": "cs-sn-crun-tmpfs-oom",
+      "shortTag": "Tmpfs OOM",
+      "category": "Cloud Run & Jobs",
+      "service": "Cloud Run",
+      "title": "Writing 600 MB CSV Export to `/tmp` Crashed 512 MiB Cloud Run Instance",
+      "quip": "\"Wrote a temporary 600 MB report to `/tmp/report.csv` before uploading to Cloud Storage—forgot that Cloud Run's `/tmp` is an in-memory `tmpfs` backed by container RAM!\"",
+      "tip": "Remember that writable filesystem paths (like `/tmp`) in Cloud Run are stored in container memory (`tmpfs`); stream large payloads directly to Cloud Storage or delete `/tmp` files immediately.",
+      "prevent": "Use streaming multipart uploads directly to Cloud Storage (or Signed URLs so clients upload directly to GCS) and unlink temporary files immediately.",
+      "detect": "Cloud Run `run.googleapis.com/container/memory/utilizations` climbing monotonically across requests followed by memory limit termination.",
+      "recover": "Stream data directly to/from Cloud Storage without buffering full files in `/tmp`, and increase `--memory` if local scratch space is unavoidable.",
+      "docLabel": "Cloud Run Container Runtime Contract",
+      "docUrl": "https://docs.cloud.google.com/run/docs/container-contract",
+      "q": "Where are files written to `/tmp` stored inside a Cloud Run container instance?",
+      "opts": [
+        "In an in-memory `tmpfs` filesystem that counts directly against the container instance's configured memory limit",
+        "On an unlimited free 100 TB local NVMe disk",
+        "Automatically inside BigQuery tables"
+      ],
+      "ans": 0,
+      "why": "Cloud Run's writable filesystem is an in-memory `tmpfs`; uncleaned or oversized files in `/tmp` consume container RAM and trigger OOM crashes."
+    },
+    {
+      "id": "cs-sn-crun-sync-chain",
+      "shortTag": "Sync Chain",
+      "category": "Cloud Run & Jobs",
+      "service": "Cloud Run",
+      "title": "Synchronous Chain of 5 Cloud Run Services Compounded Cold Starts & Cost",
+      "quip": "\"Service A called Service B synchronously, which waited on C, D, and E—all 5 billed for simultaneous wall-clock wait time and compounded cold-start tail latency to 12 seconds!\"",
+      "tip": "Avoid deep synchronous HTTP chains across serverless services; decouple stages asynchronously with Pub/Sub, Cloud Tasks, or Workflows.",
+      "prevent": "Use Cloud Workflows for orchestration or Pub/Sub / Cloud Tasks for asynchronous event-driven handoffs instead of nested blocking HTTP calls.",
+      "detect": "Cloud Trace waterfalls showing outer Cloud Run spans sitting idle waiting on nested downstream HTTP calls.",
+      "recover": "Break synchronous HTTP chains into asynchronous Pub/Sub / Cloud Tasks steps or consolidate tightly coupled internal hops.",
+      "docLabel": "Cloud Workflows Overview",
+      "docUrl": "https://docs.cloud.google.com/workflows/docs/overview",
+      "q": "What are the two major downsides of chaining 5 Cloud Run services synchronously (`A → B → C → D → E`) in a blocking HTTP call tree?",
+      "opts": [
+        "Cloud Run blocks HTTP requests between services in the same project",
+        "Tail latencies and cold starts add up across all 5 hops, and upstream services remain open billing for request duration while idly waiting on downstream hops",
+        "Each hop reduces the payload size by 50%"
+      ],
+      "ans": 1,
+      "why": "Synchronous chains compound tail latency/failure probabilities and double-bill for idle upstream wait time; async queues or Workflows eliminate blocking wait chains."
+    },
+    {
+      "id": "cs-sn-neg-hc-drop",
+      "shortTag": "502 BadGW",
+      "category": "Service Mesh & Gateway",
+      "service": "GKE Ingress / Gateway",
+      "title": "Rolling Deployment `502 Bad Gateway` Spikes During Pod Termination",
+      "quip": "\"Every rolling update dropped 1% of requests with `502 Bad Gateway` because Pods closed their HTTP listener immediately on `SIGTERM` before the Google Cloud Load Balancer removed the NEG endpoint!\"",
+      "tip": "Add a `preStop` sleep hook (e.g., `sleep 10`–`15`) and keep the HTTP server accepting in-flight connections briefly while the GCLB NEG health check deregisters the terminating Pod.",
+      "prevent": "Configure a `lifecycle.preStop` hook (`sleep 15`), mark readiness failing on `SIGTERM`, and set `terminationGracePeriodSeconds: 60`.",
+      "detect": "Cloud Load Balancing logs showing `statusDetails: backend_connection_closed_before_data_sent_to_client` (`502`) correlated with GKE rolling updates.",
+      "recover": "Add `lifecycle.preStop: exec: command: [\"/bin/sh\", \"-c\", \"sleep 15\"]` and graceful HTTP server drain on `SIGTERM`.",
+      "docLabel": "Container-Native Load Balancing on GKE",
+      "docUrl": "https://docs.cloud.google.com/kubernetes-engine/docs/how-to/container-native-load-balancing",
+      "q": "Why do GKE Services backed by Container-Native Load Balancing (NEGs) sometimes return `502 Bad Gateway` during Pod scale-in or rolling updates if no `preStop` hook is configured?",
+      "opts": [
+        "GKE deletes the entire VPC firewall during every rolling update",
+        "Container-Native Load Balancing only supports UDP traffic",
+        "Endpoint removal propagation to the external Envoy/GFE load balancer runs asynchronously in parallel with `SIGTERM`; if the Pod closes its socket immediately, in-flight LB requests hit a closed socket"
+      ],
+      "ans": 2,
+      "why": "When a Pod terminates, NEG endpoint deregistration and `SIGTERM` happen concurrently; a brief `preStop` delay lets the load balancer drain traffic before the app closes its listening socket."
+    },
+    {
+      "id": "cs-sn-mtls-strict",
+      "shortTag": "mTLS Break",
+      "category": "Service Mesh & Gateway",
+      "service": "Cloud Service Mesh",
+      "title": "Cluster-Wide `STRICT` mTLS Applied Without `PERMISSIVE` Migration Window",
+      "quip": "\"Applied a root-namespace `PeerAuthentication` with `mtls.mode: STRICT` on Friday afternoon—instantly broke every non-mesh client and external health check!\"",
+      "tip": "Migrate to Cloud Service Mesh mTLS gradually: start in `PERMISSIVE` mode (accepting both plaintext and mTLS), verify 100% mTLS coverage in metrics, then lock down to `STRICT` per namespace.",
+      "prevent": "Roll out `PeerAuthentication` in `PERMISSIVE` mode first, audit plaintext connections via mesh telemetry, and transition to `STRICT` namespace-by-namespace.",
+      "detect": "Cloud Service Mesh metrics (`istio_requests_total` with `connection_security_policy=\"none\"`) identifying remaining plaintext callers before enforcing `STRICT`.",
+      "recover": "Revert `PeerAuthentication` to `PERMISSIVE` to restore traffic, onboard remaining callers to the mesh, then re-enable `STRICT`.",
+      "docLabel": "Cloud Service Mesh Mutual TLS Migration",
+      "docUrl": "https://docs.cloud.google.com/service-mesh/docs/security/configuring-mtls",
+      "q": "What is the recommended migration path to enforce `STRICT` mutual TLS in Cloud Service Mesh without causing an outage?",
+      "opts": [
+        "Start in `PERMISSIVE` mode (which accepts both plaintext and mTLS), use mesh telemetry to confirm all callers use mTLS, and then switch to `STRICT` per namespace/workload",
+        "Switch the entire production fleet to `STRICT` at peak traffic without sidecars",
+        "Disable TLS completely and use telnet"
+      ],
+      "ans": 0,
+      "why": "`PERMISSIVE` mode allows sidecar-injected workloads to negotiate mTLS while still accepting plaintext from unmigrated callers until 100% mesh coverage is verified."
+    },
+    {
+      "id": "cs-sn-hairpin-nat",
+      "shortTag": "CloudNAT$",
+      "category": "Service Mesh & Gateway",
+      "service": "VPC & GKE Networking",
+      "title": "Private GKE Pods Pulled Container Images via Cloud NAT Public IPs",
+      "quip": "\"Left Private Google Access disabled on the GKE subnet—every private node pulled multi-gigabyte Artifact Registry images and GCS blobs through Cloud NAT at $0.045/GB!\"",
+      "tip": "Always enable Private Google Access (or Private Service Connect for Google APIs) on subnets hosting GKE nodes and Cloud Run Direct VPC Egress.",
+      "prevent": "Enable `Private Google Access` on all VPC subnets via Terraform and enforce via Org Policy / network modules.",
+      "detect": "Cloud Billing spike in `Cloud NAT Data Processed` paired with VPC Flow Logs showing traffic to Google API IP ranges traversing the NAT gateway.",
+      "recover": "Enable Private Google Access (`gcloud compute networks subnets update --enable-private-ip-google-access`) so Google API traffic stays on Google's private network free of NAT processing fees.",
+      "docLabel": "Private Google Access for GKE",
+      "docUrl": "https://docs.cloud.google.com/vpc/docs/private-google-access",
+      "q": "Why were private GKE nodes incurring thousands of dollars in Cloud NAT data-processing charges when pulling images from Artifact Registry in the same region?",
+      "opts": [
+        "Artifact Registry only works over dial-up modems",
+        "Private Google Access was disabled on the GKE subnet, forcing traffic destined for `*.pkg.dev` and `*.googleapis.com` out through the paid Cloud NAT gateway",
+        "GKE Autopilot requires 10 Cloud NAT gateways per Pod"
+      ],
+      "ans": 1,
+      "why": "Enabling Private Google Access routes traffic to Artifact Registry and Cloud Storage over Google's internal network without using or paying for Cloud NAT."
+    },
+    {
+      "id": "cs-sn-latest-tag",
+      "shortTag": ":latestBug",
+      "category": "CI/CD & Supply Chain",
+      "service": "Artifact Registry",
+      "title": "Mutable `:latest` Tag Caused Split-Brain Pods During Autoscaling",
+      "quip": "\"Deployed `image: app:latest`—when HPA scaled out from 5 to 20 Pods two hours later, the 15 new Pods pulled an unreviewed dev push overwritten onto `:latest`!\"",
+      "tip": "Pin every production GKE and Cloud Run deployment to an immutable `@sha256:...` image digest and enable tag immutability on Artifact Registry.",
+      "prevent": "Enable immutable tags on Artifact Registry, deploy by immutable digest (`image@sha256:...`), and block mutable tags via Policy Controller / Binary Authorization.",
+      "detect": "GKE Security Posture and Policy Controller `K8sImageDigests` constraint violations flagging images without `@sha256:` digests.",
+      "recover": "Roll back the Deployment to the pinned `@sha256:` digest of the known-good release and enable tag immutability in Artifact Registry.",
+      "docLabel": "Artifact Registry Immutable Image Tags",
+      "docUrl": "https://docs.cloud.google.com/artifact-registry/docs/docker/names-and-tags",
+      "q": "What is the risk of referencing a mutable tag like `:latest` or `:prod` in a Kubernetes Deployment manifest?",
+      "opts": [
+        "Kubernetes cannot parse colons in image strings",
+        "Every node caches `:latest` forever even when `imagePullPolicy: Always` is set",
+        "When HPA scales out or a node reschedules a Pod later, new Pods may pull a different image binary than existing Pods, causing version drift and breaking rollbacks"
+      ],
+      "ans": 2,
+      "why": "Deploying by immutable digest (`@sha256:...`) guarantees every replica runs the exact same verified container binary across scale-outs and rollbacks."
+    },
+    {
+      "id": "cs-sn-priv-pod",
+      "shortTag": "PrivEscPod",
+      "category": "CI/CD & Supply Chain",
+      "service": "GKE Security",
+      "title": "`privileged: true` Pod with `hostPath: /` Escaped to Worker Node",
+      "quip": "\"A debugging manifest with `securityContext.privileged: true` and `hostPath: /` made it to prod—giving a compromised container full root access to the GKE node and kubelet credentials!\"",
+      "tip": "Enforce the Kubernetes `Restricted` Pod Security Standard (`pod-security.kubernetes.io/enforce: restricted`) or use GKE Autopilot, which blocks `privileged: true` and `hostPath` by default.",
+      "prevent": "Use GKE Autopilot or enforce Pod Security Admission (`restricted` profile) and Policy Controller constraints blocking `privileged`, `hostPath`, and `hostNetwork`.",
+      "detect": "Security Command Center / GKE Security Posture findings (`PRIVILEGED_CONTAINER`, `HOST_PATH_VOLUME_MOUNT`) and Cloud Audit Logs on `pods/create`.",
+      "recover": "Evict the privileged Pod, cordone/replace the affected node pool VMs, rotate credentials, and enforce the `restricted` Pod Security Standard.",
+      "docLabel": "Enforce Pod Security Standards in GKE",
+      "docUrl": "https://docs.cloud.google.com/kubernetes-engine/docs/how-to/pod-security-standards",
+      "q": "Which built-in Kubernetes admission control mechanism blocks `privileged: true`, `hostPath` mounts, and root user execution at the namespace level?",
+      "opts": [
+        "Pod Security Standards (`pod-security.kubernetes.io/enforce: restricted`) via the built-in Pod Security Admission controller",
+        "Horizontal Pod Autoscaler",
+        "kube-proxy iptables mode"
+      ],
+      "ans": 0,
+      "why": "Pod Security Admission enforces the `baseline` or `restricted` Pod Security Standard natively on namespaces without requiring third-party webhook infrastructure."
+    },
+    {
+      "id": "cs-sn-default-sa",
+      "shortTag": "NodeSA IAM",
+      "category": "Config & Secret Mgmt",
+      "service": "GKE IAM",
+      "title": "GKE Nodes Created with Default Compute Service Account (`roles/editor`)",
+      "quip": "\"Created a GKE Standard node pool without a custom IAM service account or Workload Identity—every Pod on the node inherited `PROJECT_NUMBER-compute@developer` with project-wide `Editor` access!\"",
+      "tip": "Always enable Workload Identity Federation for GKE and assign a minimally privileged custom IAM service account (`roles/container.defaultNodeServiceAccount`) to node pools.",
+      "prevent": "Enforce `constraints/iam.automaticIamGrantsForDefaultServiceAccounts`, use a dedicated node SA with `roles/container.defaultNodeServiceAccount`, and enable Workload Identity.",
+      "detect": "GKE Security Posture and Security Command Center `NODE_POOL_USES_DEFAULT_SERVICE_ACCOUNT` findings.",
+      "recover": "Enable Workload Identity on the cluster, migrate node pools to a least-privilege custom node service account, and bind Pods to scoped IAM principals.",
+      "docLabel": "Harden Your GKE Cluster's Security",
+      "docUrl": "https://docs.cloud.google.com/kubernetes-engine/docs/how-to/hardening-your-cluster",
+      "q": "Which minimally privileged predefined IAM role should be granted to a custom GKE node pool service account instead of `roles/editor`?",
+      "opts": [
+        "`roles/owner`",
+        "`roles/container.defaultNodeServiceAccount` (plus Artifact Registry Reader if pulling private images)",
+        "`roles/iam.securityAdmin`"
+      ],
+      "ans": 1,
+      "why": "`roles/container.defaultNodeServiceAccount` contains only the minimum logging, monitoring, and node telemetry permissions required by the GKE kubelet."
+    },
+    {
+      "id": "cs-sn-env-secrets",
+      "shortTag": "PlainEnvSec",
+      "category": "Config & Secret Mgmt",
+      "service": "Secret Manager",
+      "title": "Plaintext Database & Stripe Keys Committed in `Deployment.yaml`",
+      "quip": "\"Hardcoded `STRIPE_SECRET_KEY` inside `Deployment.yaml` and printed `process.env` on startup—leaked production credentials into Git history and Cloud Logging!\"",
+      "tip": "Never store credentials in Git manifests or log `process.env`; store secrets in Secret Manager and mount them via CSI driver or Cloud Run Secret volumes.",
+      "prevent": "Store all credentials in Secret Manager, mount as files via CSI/Cloud Run secret integration, and run pre-commit secret scanning in CI.",
+      "detect": "Secret scanning alerts in CI/Git and Cloud Logging DLP inspection / log exclusion filters.",
+      "recover": "Rotate the compromised API keys immediately in Secret Manager, purge the plaintext logs/history, and switch the workload to Secret Manager volume mounts.",
+      "docLabel": "Access Secrets in Cloud Run",
+      "docUrl": "https://docs.cloud.google.com/run/docs/configuring/services/secrets",
+      "q": "What is the best practice for providing a sensitive third-party API key to a Cloud Run Service or GKE Pod?",
+      "opts": [
+        "Commit the API key into a public `ConfigMap` in Git",
+        "Pass it in the URL query string of every user request",
+        "Store it in Google Cloud Secret Manager, pin the workload to a specific secret version, and mount it as a volume (or secret reference) via least-privilege IAM"
+      ],
+      "ans": 2,
+      "why": "Secret Manager provides encryption at rest, audit logging, IAM access control, and version pinning so secrets never live in Git or plaintext manifests."
+    },
+    {
+      "id": "cs-sn-liveness-db",
+      "shortTag": "ProbeDeath",
+      "category": "Resilience & Probes",
+      "service": "GKE & Cloud Run",
+      "title": "`livenessProbe` Querying Shared Database Triggered Cascading Restart Loop",
+      "quip": "\"Pointed `livenessProbe` at `/healthz` which ran `SELECT 1` on PostgreSQL—a 2-second DB blip caused kubelet to restart all 50 Pods simultaneously, DDOSing the DB on boot!\"",
+      "tip": "Never check external downstream dependencies inside a `livenessProbe`; `livenessProbe` should only verify the local process is not deadlocked.",
+      "prevent": "Keep `livenessProbe` strictly local (checking only that the local HTTP/gRPC event loop responds) and reserve dependency checks for `readinessProbe` or circuit breakers.",
+      "detect": "High Pod restart counts (`kube_pod_container_status_restarts_total`) occurring simultaneously across all replicas during brief downstream latency spikes.",
+      "recover": "Change `livenessProbe` to hit a lightweight local `/livez` endpoint that does not call external databases or downstream APIs.",
+      "docLabel": "Configure Liveness, Readiness, and Startup Probes",
+      "docUrl": "https://docs.cloud.google.com/kubernetes-engine/docs/how-to/configure-liveness-probe",
+      "q": "Why should a `livenessProbe` NEVER fail when a downstream database or external API is temporarily slow?",
+      "opts": [
+        "Failing `livenessProbe` restarts the container—restarting all healthy application Pods won't fix an external database blip and instead triggers a thundering-herd cold-start outage",
+        "`livenessProbe` is billed at $10 per failure",
+        "`livenessProbe` can only check UDP ports"
+      ],
+      "ans": 0,
+      "why": "A `livenessProbe` failure kills and restarts the Pod; only local unrecoverable deadlocks warrant a restart, while external dependency issues should be handled via `readinessProbe` or circuit breakers."
+    },
+    {
+      "id": "cs-sn-pdb-zero",
+      "shortTag": "PDB Lock",
+      "category": "Resilience & Probes",
+      "service": "Google Kubernetes Engine",
+      "title": "`PodDisruptionBudget` with `maxUnavailable: 0` Blocked Node Pool Security Patching",
+      "quip": "\"Set `minAvailable: 100%` (`maxUnavailable: 0`) on a 3-replica Deployment—GKE node upgrades and autoscaler scale-down could never evict a single Pod and timed out!\"",
+      "tip": "Always leave at least 1 Pod of eviction budget in every `PodDisruptionBudget` (e.g., `maxUnavailable: 1` or `minAvailable: 80%` with >= 2 replicas).",
+      "prevent": "Set `maxUnavailable: 1` (or `25%`) on multi-replica Deployments and validate PDBs in CI with Policy Controller.",
+      "detect": "GKE Cluster Notifications & Insights flagging `POD_DISRUPTION_BUDGET_BLOCKING_NODE_UPGRADE` (`CannotEvictPod`).",
+      "recover": "Update the `PodDisruptionBudget` to `maxUnavailable: 1` (or `minAvailable: N-1`) so voluntary node drains can proceed safely one Pod at a time.",
+      "docLabel": "Ensure Disruption Budget Availability on GKE",
+      "docUrl": "https://docs.cloud.google.com/kubernetes-engine/docs/how-to/pod-disruption-budget",
+      "q": "What happens if you configure a `PodDisruptionBudget` with `maxUnavailable: 0` (or `minAvailable: 1` on a `replicas: 1` Deployment)?",
+      "opts": [
+        "The Pod becomes 100% immune to hardware failures",
+        "Voluntary evictions via the Eviction API (node upgrades, node pool drains, Cluster Autoscaler scale-in) are blocked until the drain timeout expires and forces termination",
+        "GKE automatically scales the Deployment to 100 replicas"
+      ],
+      "ans": 1,
+      "why": "A zero-disruption budget forbids all voluntary evictions, stalling node maintenance and Cluster Autoscaler scale-down until forced drain timeouts."
+    },
+    {
+      "id": "cs-sn-pid1-sigterm",
+      "shortTag": "No SIGTERM",
+      "category": "Resilience & Probes",
+      "service": "GKE & Cloud Run",
+      "title": "Shell Form `ENTRYPOINT \"sh -c ./app\"` Swallowed `SIGTERM` Signal",
+      "quip": "\"Used shell form `ENTRYPOINT ./server` so `/bin/sh` ran as PID 1—it ignored `SIGTERM` on scale-in, hung for the full 30s grace period, and got violently `SIGKILL`ed mid-transaction!\"",
+      "tip": "Always use JSON `exec` array syntax (`ENTRYPOINT [\"./server\"]`) or `exec` in wrapper scripts so your application runs as PID 1 and receives `SIGTERM` directly.",
+      "prevent": "Use `ENTRYPOINT [\"/app/server\"]` (exec form) or `tini`/`dumb-init` as PID 1, and register a `SIGTERM` handler that drains in-flight requests cleanly.",
+      "detect": "Pod termination duration consistently equaling the exact `terminationGracePeriodSeconds` (e.g., 30.0s) followed by `Exit Code 137` (`SIGKILL`).",
+      "recover": "Switch the Dockerfile `ENTRYPOINT`/`CMD` to `exec` array form (`[\"/app/server\"]`) so the process runs as PID 1 and handles `SIGTERM` immediately.",
+      "docLabel": "Best Practices for Building Containers",
+      "docUrl": "https://docs.cloud.google.com/build/docs/optimize-builds/best-practices-for-building-containers",
+      "q": "Why does a container using `CMD /bin/sh -c \"node server.js\"` fail to shut down gracefully when GKE or Cloud Run sends `SIGTERM`?",
+      "opts": [
+        "Node.js does not support signals on Linux",
+        "`SIGTERM` is only sent to Windows containers",
+        "`/bin/sh` runs as PID 1 and does not forward `SIGTERM` to child processes by default, so `node` never receives the signal until `SIGKILL` forcibly terminates the container"
+      ],
+      "ans": 2,
+      "why": "Using `ENTRYPOINT [\"node\", \"server.js\"]` (or `exec node server.js` in a script) replaces the shell so your app is PID 1 and receives `SIGTERM` directly."
+    }
+  ],
+  "shields": [
+    {
+      "id": "cs-sh-pdb",
+      "shortTag": "PDB Guard",
+      "category": "Resilience & Probes",
+      "service": "Google Kubernetes Engine",
+      "title": "Pod Disruption Budgets (`maxUnavailable: 1`)",
+      "quip": "\"Node pool upgrade drained worker VMs one by one while guaranteeing at least 85% of replicas stayed `Ready`!\"",
+      "tip": "Define a `PodDisruptionBudget` for every stateless and stateful service so voluntary node drains never exceed safe capacity limits.",
+      "docLabel": "Pod Disruption Budgets on GKE",
+      "docUrl": "https://docs.cloud.google.com/kubernetes-engine/docs/how-to/pod-disruption-budget"
+    },
+    {
+      "id": "cs-sh-pss",
+      "shortTag": "PodSecStd",
+      "category": "CI/CD & Supply Chain",
+      "service": "Google Kubernetes Engine",
+      "title": "Pod Security Standards (`Restricted` Profile)",
+      "quip": "\"Namespace labels enforced non-root execution, dropped `ALL` Linux capabilities, and blocked privilege escalation at admission!\"",
+      "tip": "Label production namespaces with `pod-security.kubernetes.io/enforce: restricted` to enforce least-privilege container security contexts.",
+      "docLabel": "Enforce Pod Security Standards in GKE",
+      "docUrl": "https://docs.cloud.google.com/kubernetes-engine/docs/how-to/pod-security-standards"
+    },
+    {
+      "id": "cs-sh-binauthz",
+      "shortTag": "BinAuthz",
+      "category": "CI/CD & Supply Chain",
+      "service": "Binary Authorization",
+      "title": "Binary Authorization Continuous Validation",
+      "quip": "\"Every container admitted to GKE and Cloud Run is cryptographically attested by Cloud Build with zero critical CVEs!\"",
+      "tip": "Combine Binary Authorization admission enforcement with Continuous Validation (CV) to audit running pods against your attestation policy.",
+      "docLabel": "Binary Authorization Overview",
+      "docUrl": "https://docs.cloud.google.com/binary-authorization/docs/overview"
+    },
+    {
+      "id": "cs-sh-ar-scan",
+      "shortTag": "AR VulnScan",
+      "category": "CI/CD & Supply Chain",
+      "service": "Artifact Registry",
+      "title": "Artifact Analysis On-Push OS & Language CVE Scanning",
+      "quip": "\"Caught a critical OpenSSL & Maven dependency CVE the second the image pushed to Artifact Registry—before it ever reached staging!\"",
+      "tip": "Enable Artifact Analysis automatic scanning on Artifact Registry to detect OS and language package vulnerabilities (Go, Java, Node, Python) on push.",
+      "docLabel": "Artifact Analysis Vulnerability Scanning",
+      "docUrl": "https://docs.cloud.google.com/artifact-analysis/docs/container-scanning-overview"
+    },
+    {
+      "id": "cs-sh-rel-chan",
+      "shortTag": "RelChannel",
+      "category": "GKE Autopilot & Scaling",
+      "service": "Google Kubernetes Engine",
+      "title": "GKE Release Channels + Maintenance Exclusions",
+      "quip": "\"Enrolled production in the Regular Release Channel with a Black Friday maintenance exclusion window—zero surprise upgrades during peak week!\"",
+      "tip": "Enroll GKE clusters in Release Channels (`Rapid` for dev, `Regular`/`Stable` for prod) and configure Maintenance Windows and Exclusions around peak events.",
+      "docLabel": "GKE Release Channels & Maintenance Windows",
+      "docUrl": "https://docs.cloud.google.com/kubernetes-engine/docs/concepts/release-channels"
+    },
+    {
+      "id": "cs-sh-netpol",
+      "shortTag": "NetPolicy",
+      "category": "Service Mesh & Gateway",
+      "service": "GKE Dataplane V2",
+      "title": "GKE Dataplane V2 (Cilium eBPF) NetworkPolicies",
+      "quip": "\"Default-deny east-west `NetworkPolicy` isolated the `payments` namespace at kernel eBPF speed with built-in packet-drop observability!\"",
+      "tip": "Use GKE Dataplane V2 (powered by Cilium eBPF) and enforce default-deny ingress/egress `NetworkPolicy` manifests between namespaces.",
+      "docLabel": "GKE Dataplane V2 Overview",
+      "docUrl": "https://docs.cloud.google.com/kubernetes-engine/docs/concepts/dataplane-v2"
+    },
+    {
+      "id": "cs-sh-crun-min",
+      "shortTag": "WarmMinIns",
+      "category": "Cloud Run & Jobs",
+      "service": "Cloud Run",
+      "title": "Cloud Run Warm Minimum Instances (`--min-instances`)",
+      "quip": "\"Pre-warmed 3 Cloud Run instances with initialized DB pools—zero cold-start penalty for the first morning traffic wave!\"",
+      "tip": "Configure `--min-instances` (or scheduled warm-up scaling) on latency-critical Cloud Run Services to eliminate cold starts.",
+      "docLabel": "Configure Minimum Instances in Cloud Run",
+      "docUrl": "https://docs.cloud.google.com/run/docs/configuring/min-instances"
+    },
+    {
+      "id": "cs-sh-crun-iap",
+      "shortTag": "CRun + IAP",
+      "category": "Service Mesh & Gateway",
+      "service": "Cloud Run",
+      "title": "Cloud Run Internal Ingress + Cloud Load Balancing + IAP",
+      "quip": "\"Locked down `--ingress=internal-and-cloud-load-balancing` behind Cloud Armor and Identity-Aware Proxy—direct `.run.app` bypass blocked!\"",
+      "tip": "Restrict Cloud Run ingress to `internal-and-cloud-load-balancing` (or disable the default `.run.app` URL) when fronting services with a Global External Application Load Balancer.",
+      "docLabel": "Restrict Network Ingress for Cloud Run",
+      "docUrl": "https://docs.cloud.google.com/run/docs/securing/ingress"
+    },
+    {
+      "id": "cs-sh-gke-backup",
+      "shortTag": "Backup GKE",
+      "category": "Resilience & Probes",
+      "service": "Backup for GKE",
+      "title": "Backup for GKE (Cluster State + Volume Snapshots)",
+      "quip": "\"Scheduled daily encrypted backups of both Kubernetes API manifests and PersistentVolume disks with cross-region retention locks!\"",
+      "tip": "Enable Backup for GKE with automated schedules and locked retention policies to recover namespaces, CRDs, and stateful volumes rapidly.",
+      "docLabel": "Backup for GKE Overview",
+      "docUrl": "https://docs.cloud.google.com/kubernetes-engine/docs/add-on/backup-for-gke/concepts/backup-for-gke"
+    },
+    {
+      "id": "cs-sh-fleet-pol",
+      "shortTag": "PolicyCtrl",
+      "category": "CI/CD & Supply Chain",
+      "service": "GKE Enterprise",
+      "title": "GKE Policy Controller (Shift-Left CI + Admission Guardrails)",
+      "quip": "\"Validated every YAML against OPA Policy Controller constraints in Cloud Build CI and at `kube-apiserver` admission!\"",
+      "tip": "Use Policy Controller to enforce organization-wide constraints (required labels, resource requests, approved registries, no `:latest` tags) in both CI and cluster admission.",
+      "docLabel": "Policy Controller Overview",
+      "docUrl": "https://docs.cloud.google.com/kubernetes-engine/enterprise/policy-controller/docs/overview"
+    },
+    {
+      "id": "cs-sh-vpa-rec",
+      "shortTag": "VPA Sizer",
+      "category": "GKE Autopilot & Scaling",
+      "service": "Google Kubernetes Engine",
+      "title": "Vertical Pod Autoscaler (VPA) Rightsizing Guardrail",
+      "quip": "\"VPA historical percentile recommendations eliminated both OOMKills on under-sized pods and 60% slack on over-requested pods!\"",
+      "tip": "Run Vertical Pod Autoscaler in `Off` (recommendation) or `Auto` mode to right-size Pod CPU and memory requests based on real usage.",
+      "docLabel": "Vertical Pod Autoscaling in GKE",
+      "docUrl": "https://docs.cloud.google.com/kubernetes-engine/docs/concepts/verticalpodautoscaler"
+    },
+    {
+      "id": "cs-sh-sec-posture",
+      "shortTag": "GKEPosture",
+      "category": "Config & Secret Mgmt",
+      "service": "Google Kubernetes Engine",
+      "title": "GKE Security Posture Dashboard & Workload Audit",
+      "quip": "\"Continuously scanned running workloads against CIS GKE Benchmarks and Pod Security Standards with actionable remediation guidance!\"",
+      "tip": "Enable the GKE Security Posture dashboard to detect workload configuration risks, RBAC over-permissions, and live container vulnerabilities.",
+      "docLabel": "About GKE Security Posture",
+      "docUrl": "https://docs.cloud.google.com/kubernetes-engine/docs/concepts/about-security-posture"
+    },
+    {
+      "id": "cs-sh-graceful",
+      "shortTag": "PreStopSlp",
+      "category": "Resilience & Probes",
+      "service": "GKE & Cloud Run",
+      "title": "`preStop` Drain Hook + Graceful `SIGTERM` Shutdown",
+      "quip": "\"Zero dropped connections during rolling deployments—`preStop` waited for NEG deregistration while the server drained active requests!\"",
+      "tip": "Pair a `preStop` delay with a `SIGTERM` handler that stops accepting new connections and finishes in-flight requests within `terminationGracePeriodSeconds`.",
+      "docLabel": "Container-Native Load Balancing Readiness & Termination",
+      "docUrl": "https://docs.cloud.google.com/kubernetes-engine/docs/how-to/container-native-load-balancing"
+    },
+    {
+      "id": "cs-sh-crun-cmek",
+      "shortTag": "CRun CMEK",
+      "category": "Config & Secret Mgmt",
+      "service": "Cloud Run",
+      "title": "Cloud Run CMEK + VPC Service Controls Perimeter",
+      "quip": "\"Encrypted container images and runtime state with Customer-Managed Encryption Keys inside a VPC Service Controls perimeter!\"",
+      "tip": "Protect regulated Cloud Run workloads with Cloud KMS Customer-Managed Encryption Keys (CMEK) and VPC Service Controls perimeters.",
+      "docLabel": "Use Customer-Managed Encryption Keys in Cloud Run",
+      "docUrl": "https://docs.cloud.google.com/run/docs/securing/using-cmek"
+    },
+    {
+      "id": "cs-sh-local-dns",
+      "shortTag": "NodeLocDNS",
+      "category": "Service Mesh & Gateway",
+      "service": "Google Kubernetes Engine",
+      "title": "NodeLocal DNSCache on GKE",
+      "quip": "\"Cached DNS lookups locally on each GKE node via a DaemonSet—eliminated `kube-dns` conntrack races and cut DNS tail latency to sub-millisecond!\"",
+      "tip": "Enable NodeLocal DNSCache on high-QPS GKE clusters to avoid `kube-dns` bottlenecks and UDP conntrack table exhaustion.",
+      "docLabel": "Set Up NodeLocal DNSCache on GKE",
+      "docUrl": "https://docs.cloud.google.com/kubernetes-engine/docs/how-to/nodelocal-dns-cache"
+    },
+    {
+      "id": "cs-sh-gw-armor",
+      "shortTag": "GW + Armor",
+      "category": "Service Mesh & Gateway",
+      "service": "GKE Gateway API",
+      "title": "GKE Gateway `GCPBackendPolicy` with Cloud Armor WAF",
+      "quip": "\"Attached an Adaptive Protection Cloud Armor security policy declaratively to our GKE Gateway backends via `GCPBackendPolicy`!\"",
+      "tip": "Attach Cloud Armor security policies, IAP, and custom timeouts to GKE Gateway backends declaratively using `GCPBackendPolicy`.",
+      "docLabel": "Configure Gateway Policy Resources on GKE",
+      "docUrl": "https://docs.cloud.google.com/kubernetes-engine/docs/how-to/configure-gateway-resources"
+    }
+  ]
+}

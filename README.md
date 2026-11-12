@@ -4,20 +4,24 @@
 
 An interactive, single-viewport 10×10 **Snakes & Ladders** architecture board game where every ladder, snake, and resilience shield teaches real-world cloud engineering lessons and tests your knowledge with scenario-based multiple-choice challenges.
 
-Built with a **pluggable JSON pack engine** so anyone can clone this repository, use the included LLM prompt template to generate a new scenario & question bank (e.g., *Google Cloud Security*, *Google Cloud × Wiz*, *GKE SRE*, *FinOps*), validate it locally, and host it anywhere.
+Built with a **pluggable JSON pack engine** featuring **8 built-in Google Cloud Editions** (**598 total scenarios** and **420 quiz questions**). Anyone can clone this repository, use the included LLM prompt template to generate a new scenario & question bank (e.g., *Google Cloud × Wiz*, *FinOps for Executives*, *Cert Prep*), validate it locally, and host it anywhere.
 
-- **Live Demo (All Packs):** https://snakes-ladders-cloud-architect-415458962931.us-central1.run.app
-- **Direct Link — Cloud Architect Edition:** https://snakes-ladders-cloud-architect-415458962931.us-central1.run.app/?pack=cloud-architect
-- **Direct Link — Google Cloud Databases Edition:** https://snakes-ladders-cloud-architect-415458962931.us-central1.run.app/?pack=cloud-databases
+- **Live Demo (All 8 Packs):** https://snakes-ladders-cloud-architect-415458962931.us-central1.run.app
 
 ---
 
-## Included Edition Packs
+## Included Edition Packs (598 Scenarios & 420 Quiz Questions)
 
-| Edition Pack | Pack ID | Scenarios | Quiz Questions | Focus Areas |
+| Edition Pack | Pack ID | Scenarios | Questions | Focus Areas & Direct Link |
 | :--- | :--- | :---: | :---: | :--- |
-| **Cloud Architect Edition** | `cloud-architect` | **220** *(93 Ladders, 75 Snakes, 50 Shields, 2 Milestones)* | **168** | Compute, GKE, Serverless, IAM, Networking, Storage, Databases, Data & Analytics, AI/ML, CI/CD, Observability, FinOps |
-| **Google Cloud Databases Edition** | `cloud-databases` | **54** *(18 Ladders, 18 Snakes, 16 Shields, 2 Milestones)* | **36** | AlloyDB, Cloud Spanner, Cloud SQL, Firestore, Bigtable, Memorystore, DMS & Datastream |
+| **Cloud Architect Edition** | `cloud-architect` | **220** | **168** | Full GCP Suite — [Launch Pack](https://snakes-ladders-cloud-architect-415458962931.us-central1.run.app/?pack=cloud-architect) |
+| **Google Cloud Databases Edition** | `cloud-databases` | **54** | **36** | AlloyDB, Spanner, Cloud SQL, Firestore, Bigtable, Memorystore, DMS — [Launch Pack](https://snakes-ladders-cloud-architect-415458962931.us-central1.run.app/?pack=cloud-databases) |
+| **Google Cloud Security & Zero-Trust Edition** | `cloud-security` | **54** | **36** | IAM, Workload Identity, VPC-SC, Cloud Armor, KMS, Binary Auth, SCC — [Launch Pack](https://snakes-ladders-cloud-architect-415458962931.us-central1.run.app/?pack=cloud-security) |
+| **Data Analytics & BigQuery Lakehouse Edition** | `cloud-data-analytics` | **54** | **36** | BigQuery, Pub/Sub, Dataflow, BigLake Iceberg, Dataform, Composer, Dataplex — [Launch Pack](https://snakes-ladders-cloud-architect-415458962931.us-central1.run.app/?pack=cloud-data-analytics) |
+| **GenAI, Vertex AI & AI Agents Edition** | `cloud-ai-agents` | **54** | **36** | Gemini, Vertex AI Search/RAG, ADK Multi-Agent, Model Armor, Vector Search — [Launch Pack](https://snakes-ladders-cloud-architect-415458962931.us-central1.run.app/?pack=cloud-ai-agents) |
+| **GKE, Cloud Run & Modern App Platform Edition** | `cloud-containers-serverless` | **54** | **36** | GKE Autopilot, Cloud Run, Service Mesh, Gateway API, Cloud Deploy, Probes — [Launch Pack](https://snakes-ladders-cloud-architect-415458962931.us-central1.run.app/?pack=cloud-containers-serverless) |
+| **Cloud Networking & Hybrid Connectivity Edition** | `cloud-networking` | **54** | **36** | Shared VPC, Cloud Interconnect, HA VPN, Global LB, Cloud CDN, PSC, DNS — [Launch Pack](https://snakes-ladders-cloud-architect-415458962931.us-central1.run.app/?pack=cloud-networking) |
+| **SRE, Observability & Cloud FinOps Edition** | `cloud-sre-finops` | **54** | **36** | SLOs & Error Budgets, Cloud Logging/Trace, Incident DR, CUDs, Cost Optimization — [Launch Pack](https://snakes-ladders-cloud-architect-415458962931.us-central1.run.app/?pack=cloud-sre-finops) |
 
 Switch editions anytime using the **Edition selector dropdown** in the top header or via the `?pack=<pack-id>` URL query parameter.
 
@@ -53,7 +57,7 @@ Then open **http://127.0.0.1:8080** in your browser.
 
 ## Customize & Create Your Own Edition Pack
 
-Want to create a **Google Cloud Security Edition**, **Google Cloud × Wiz Edition**, or a custom training game for your organization?
+Want to create a **Google Cloud × Wiz Edition**, a **Partner Co-Branded Edition**, or a custom internal training game for your team?
 
 See **[CUSTOMIZE.md](CUSTOMIZE.md)** for the complete guide and copy-pasteable **LLM Prompt Template**.
 
@@ -114,19 +118,25 @@ firebase deploy --only hosting
 ## Project Structure
 
 ```text
-├── index.html                 # Main single-viewport game shell & modals
-├── styles.css                 # Responsive dark-mode glassmorphic UI styles
-├── game.js                    # Topic-agnostic 10x10 board & quiz engine
-├── scenarios.js               # Auto-generated offline bundle (from bundle_packs.py)
-├── server.py                  # Hardened zero-dependency Python HTTP server
-├── Dockerfile                 # Production container image for Cloud Run
+├── index.html                           # Main single-viewport game shell & modals
+├── styles.css                           # Responsive dark-mode glassmorphic UI styles
+├── game.js                              # Topic-agnostic 10x10 board & quiz engine
+├── scenarios.js                         # Auto-generated offline bundle (from bundle_packs.py)
+├── server.py                            # Hardened zero-dependency Python HTTP server
+├── Dockerfile                           # Production container image for Cloud Run
 ├── packs/
-│   ├── manifest.json          # Registry of available edition packs
-│   ├── cloud-architect.json   # Cloud Architect Edition (220 scenarios, 168 questions)
-│   └── cloud-databases.json   # Google Cloud Databases Edition (54 scenarios, 36 questions)
+│   ├── manifest.json                    # Registry of all 8 available edition packs
+│   ├── cloud-architect.json             # Cloud Architect Edition (220 scenarios, 168 questions)
+│   ├── cloud-databases.json             # Google Cloud Databases Edition (54 scenarios, 36 questions)
+│   ├── cloud-security.json              # Google Cloud Security Edition (54 scenarios, 36 questions)
+│   ├── cloud-data-analytics.json        # Data & Analytics Edition (54 scenarios, 36 questions)
+│   ├── cloud-ai-agents.json             # GenAI & AI Agents Edition (54 scenarios, 36 questions)
+│   ├── cloud-containers-serverless.json # GKE & Serverless Edition (54 scenarios, 36 questions)
+│   ├── cloud-networking.json            # Cloud Networking Edition (54 scenarios, 36 questions)
+│   └── cloud-sre-finops.json            # SRE & Cloud FinOps Edition (54 scenarios, 36 questions)
 ├── scripts/
-│   ├── validate_pack.py       # Schema & constraint validator for packs/*.json
-│   └── bundle_packs.py        # Regenerates scenarios.js from packs/manifest.json
-├── CUSTOMIZE.md               # Copy-paste LLM prompt template & contributor guide
-└── GEMINI.md                  # AI coding agent instructions for automated pack authoring
+│   ├── validate_pack.py                 # Schema & constraint validator for packs/*.json
+│   └── bundle_packs.py                  # Regenerates scenarios.js from packs/manifest.json
+├── CUSTOMIZE.md                         # Copy-paste LLM prompt template & contributor guide
+└── GEMINI.md                            # AI coding agent instructions for automated pack authoring
 ```

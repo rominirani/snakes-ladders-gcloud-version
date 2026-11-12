@@ -2,7 +2,7 @@
 
 The **Snakes & Ladders** engine is completely topic-agnostic. All scenarios, architecture/domain quiz questions, board tiers, milestones, and documentation link allowlists live in standalone JSON files inside [`packs/`](packs/).
 
-You can create a custom edition—such as **Google Cloud Security Edition**, **Google Cloud × Wiz Edition**, **GKE Platform Engineering**, or **FinOps Edition**—in 4 steps without touching a single line of game engine code.
+You can create a custom edition—such as **Google Cloud × Wiz Security Edition**, **Apigee API Management Edition**, or **Looker BI Edition**—in 4 steps without touching a single line of game engine code.
 
 ---
 
@@ -11,123 +11,128 @@ You can create a custom edition—such as **Google Cloud Security Edition**, **G
 Copy the prompt below into Gemini, Claude, ChatGPT, or your AI coding assistant. Replace the bracketed placeholders at the top with your topic details:
 
 ```markdown
-You are a senior Principal Architect and curriculum designer for [YOUR TOPIC, e.g., "Google Cloud Security & Wiz Cloud Security Posture Management"].
+You are a senior Principal Architect and curriculum designer for [YOUR TOPIC, e.g., "Google Cloud × Wiz Cloud Security Posture Management"].
 
 Generate a complete, valid JSON pack file for the Snakes & Ladders game engine matching the exact schema below.
 
 ### Topic & Scope
 - Pack ID: `[kebab-case-id, e.g., gcloud-wiz-security]`
-- Edition Title: `[e.g., Google Cloud × Wiz Security Edition]`
+- Edition Title: `[e.g., Google Cloud × Wiz Edition]`
 - Allowed Documentation Hosts: `["docs.cloud.google.com", "cloud.google.com", "www.wiz.io"]`
-- Categories / Pillars (4 to 8): `[e.g., IAM & Identity, Attack Path Analysis, Kubernetes & Container Security, Data DSPM, Network Perimeter, Incident Response]`
+- Categories / Pillars (4 to 8): `[e.g., IAM & Identity, Attack Path Analysis, Kubernetes Security, Data DSPM, Network Perimeter, Incident Response]`
 
 ### Content Requirements
-1. **Scenarios (`scenarios` object)**:
-   - Generate at least:
-     - **18 Ladders** (`"type": "ladder"`, `"delta"` between `+8` and `+16`): Architectural upgrades, controls, or best practices that accelerate production readiness.
-     - **18 Snakes** (`"type": "snake"`, `"delta"` between `-8` and `-17`): Real-world misconfigurations, outages, or attack paths that set teams back. Every snake MUST include `"prevent"`, `"detect"`, and `"recover"` remediation guidance.
-     - **16 Shields** (`"type": "shield"`, `"delta": 0`): Preventive guardrails, detective controls, or automated policies that grant +1 Resilience Shield.
-     - **2 Milestones** (`"type": "milestone"`, keys `"ms-tile-1"` and `"ms-tile-100"`): Tile 1 kickoff and Tile 100 victory scenarios.
-   - **Strict constraints**:
-     - Every scenario's `"shortTag"` MUST be **12 characters or fewer** (including spaces) so it fits cleanly inside a board tile.
-     - Every `"docUrl"` MUST start with `https://` and use one of the `allowedDocHosts`.
-     - Every `"questionIds"` array must reference valid keys in `"questionBank"`.
-
-2. **Question Bank (`questionBank` object)**:
-   - Generate at least **36 multiple-choice questions** (`q-1`, `q-2`, ...).
-   - Every question MUST have:
-     - `"prompt"`: A realistic scenario-based question.
-     - `"options"`: Exactly **3 strings** (1 correct answer, 2 plausible distractors).
-     - `"answerIndex"`: `0`, `1`, or `2`.
-     - `"rationale"`: Clear technical explanation of why the correct option works and why the others fail.
-     - `"docUrl"` and `"docLabel"`.
+1. **Scenario Pools**:
+   - **At least 18 Ladders** (`"ladders"` array): Architectural upgrades, controls, or best practices that accelerate production readiness.
+   - **At least 18 Snakes** (`"snakes"` array): Real-world misconfigurations, outages, or attack paths that set teams back. Every snake MUST include non-empty `"prevent"`, `"detect"`, and `"recover"` remediation guidance.
+   - **At least 16 Shields** (`"shields"` array): Preventive guardrails or detective controls that grant +1 Resilience Shield.
+2. **Strict Constraints**:
+   - Every item's `"shortTag"` MUST be **12 characters or fewer** (including spaces) so it fits cleanly inside a board tile.
+   - Every `"docUrl"` MUST start with `https://` and use one of the `allowedDocHosts`.
+   - Every ladder and snake MUST include a 3-option multiple-choice question (`"q"`, `"opts"` of length 3, `"ans"` in `0..2`, and `"why"`). Shields may optionally include a quiz question as well.
 
 ### Required JSON Schema
 Output ONLY valid JSON matching this exact structure:
 {
   "meta": {
     "id": "your-pack-id",
-    "title": "Snakes & Ladders",
-    "edition": "Your Edition Name",
+    "title": "Snakes & Ladders: Your Edition Name",
+    "editionBadge": "Your Edition Badge",
     "subtitle": "One-sentence description of what players learn on the board",
-    "version": "1.0.0",
-    "author": "Your Name or Team",
-    "defaultDocHost": "docs.cloud.google.com",
     "allowedDocHosts": ["docs.cloud.google.com", "cloud.google.com"],
-    "categories": ["Category 1", "Category 2", "Category 3", "Category 4"],
     "tiers": [
-      { "rows": [0, 1], "name": "Tier 1 (1–20): Foundation" },
-      { "rows": [2, 3], "name": "Tier 2 (21–40): Core Controls" },
-      { "rows": [4, 5], "name": "Tier 3 (41–60): Scale & Automation" },
-      { "rows": [6, 7], "name": "Tier 4 (61–80): Zero-Trust & Resilience" },
-      { "rows": [8, 9], "name": "Tier 5 (81–100): Autonomous Operations" }
-    ]
+      "Tier 5 (81–100): Autonomous Operations",
+      "Tier 4 (61–80): Zero-Trust & Resilience",
+      "Tier 3 (41–60): Scale & Automation",
+      "Tier 2 (21–40): Core Controls",
+      "Tier 1 (1–20): Foundation"
+    ],
+    "milestones": {
+      "1": {
+        "shortTag": "Start",
+        "badge": "Milestone",
+        "jump": "Tile 1",
+        "title": "Tile 1 — Project Kickoff",
+        "quip": "Every production architecture starts at Tile 1.",
+        "tip": "Answer quiz challenges on Ladders, Shields, and Snakes to advance to Tile 100.",
+        "docLabel": "Documentation Overview",
+        "docUrl": "https://docs.cloud.google.com/"
+      },
+      "100": {
+        "shortTag": "Go-Live",
+        "badge": "Milestone",
+        "jump": "Tile 100",
+        "title": "Tile 100 — Production Go-Live!",
+        "quip": "Zero-downtime global launch achieved!",
+        "tip": "Review your post-game readiness breakdown across all domains.",
+        "docLabel": "Architecture Framework",
+        "docUrl": "https://docs.cloud.google.com/architecture/framework"
+      }
+    }
   },
-  "milestones": {
-    "1": { "shortTag": "Start", "scenarioId": "ms-tile-1" },
-    "100": { "shortTag": "Go-Live", "scenarioId": "ms-tile-100" }
-  },
-  "scenarios": {
-    "ld-example": {
-      "type": "ladder",
-      "delta": 12,
+  "ladders": [
+    {
+      "id": "lad-example-1",
       "shortTag": "Short <=12ch",
       "category": "Category 1",
-      "service": "Service Name",
-      "title": "Actionable Title",
-      "happened": "1-2 sentences describing what the team implemented.",
-      "impact": "1-2 sentences describing the measurable engineering benefit.",
-      "lesson": "Core architectural takeaway.",
-      "docTitle": "Official Doc Title",
+      "title": "Service Name: Actionable Best Practice",
+      "quip": "1-2 sentences describing what the team implemented.",
+      "tip": "Core architectural takeaway and why it works.",
+      "docLabel": "Official Doc Title",
       "docUrl": "https://docs.cloud.google.com/...",
-      "questionIds": ["q-1"]
-    },
-    "sn-example": {
-      "type": "snake",
-      "delta": -12,
+      "q": "Scenario-based multiple-choice question?",
+      "opts": [
+        "Plausible distractor A",
+        "Correct architectural choice B",
+        "Plausible distractor C"
+      ],
+      "ans": 1,
+      "why": "Clear technical explanation of why option B is right and why A and C fail."
+    }
+  ],
+  "snakes": [
+    {
+      "id": "snk-example-1",
       "shortTag": "Short <=12ch",
       "category": "Category 2",
-      "service": "Service Name",
-      "title": "Actionable Incident Title",
-      "happened": "What broke or was misconfigured in production.",
-      "impact": "Blast radius and operational impact.",
-      "lesson": "Core architectural takeaway.",
+      "title": "Service Name: Production Misconfiguration or Outage",
+      "quip": "What broke or was misconfigured in production.",
+      "tip": "Core architectural takeaway.",
       "prevent": "How to prevent this issue architecturally.",
       "detect": "How to detect this early via telemetry/policy.",
       "recover": "How to remediate and recover safely.",
-      "docTitle": "Official Doc Title",
+      "docLabel": "Official Doc Title",
       "docUrl": "https://docs.cloud.google.com/...",
-      "questionIds": ["q-2"]
-    },
-    "sh-example": {
-      "type": "shield",
-      "delta": 0,
-      "shortTag": "Short <=12ch",
-      "category": "Category 3",
-      "service": "Service Name",
-      "title": "Guardrail Title",
-      "happened": "What proactive control was enabled.",
-      "impact": "Grants +1 Resilience Shield to block a future outage.",
-      "lesson": "Core architectural takeaway.",
-      "docTitle": "Official Doc Title",
-      "docUrl": "https://docs.cloud.google.com/...",
-      "questionIds": ["q-3"]
-    }
-  },
-  "questionBank": {
-    "q-1": {
-      "prompt": "Scenario question text?",
-      "options": [
-        "Correct architectural choice",
+      "q": "Recovery/mitigation multiple-choice question?",
+      "opts": [
+        "Correct architectural fix",
         "Plausible distractor 1",
         "Plausible distractor 2"
       ],
-      "answerIndex": 0,
-      "rationale": "Detailed explanation.",
-      "docUrl": "https://docs.cloud.google.com/...",
-      "docLabel": "Official Doc Title"
+      "ans": 0,
+      "why": "Detailed explanation."
     }
-  }
+  ],
+  "shields": [
+    {
+      "id": "shd-example-1",
+      "shortTag": "Short <=12ch",
+      "category": "Category 3",
+      "title": "Service Name: Proactive Guardrail",
+      "quip": "What proactive control was enabled.",
+      "tip": "Grants +1 Resilience Shield to block a future outage.",
+      "docLabel": "Official Doc Title",
+      "docUrl": "https://docs.cloud.google.com/...",
+      "q": "Optional or required quiz question for this shield?",
+      "opts": [
+        "Distractor 1",
+        "Distractor 2",
+        "Correct choice"
+      ],
+      "ans": 2,
+      "why": "Detailed explanation."
+    }
+  ]
 }
 ```
 
@@ -141,7 +146,7 @@ Output ONLY valid JSON matching this exact structure:
    {
      "id": "gcloud-wiz-security",
      "title": "Google Cloud × Wiz Security Edition",
-     "edition": "Cloud Security Edition",
+     "editionBadge": "Cloud × Wiz Edition",
      "file": "packs/gcloud-wiz-security.json",
      "description": "Cloud security posture, attack path analysis, IAM, and container security"
    }

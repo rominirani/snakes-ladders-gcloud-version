@@ -1,0 +1,906 @@
+{
+  "meta": {
+    "id": "cloud-networking",
+    "title": "Snakes & Ladders",
+    "edition": "Cloud Networking Edition",
+    "editionBadge": "Cloud Networking Edition",
+    "subtitle": "Master Google Cloud Networking — from Shared VPC, 99.99% Interconnect & HA VPN to Global Anycast LB, PSC & Network Intelligence.",
+    "version": "1.0.0",
+    "author": "Google Cloud Architecture",
+    "defaultDocHost": "docs.cloud.google.com",
+    "allowedDocHosts": [
+      "docs.cloud.google.com",
+      "cloud.google.com"
+    ],
+    "categories": [
+      "VPC & Shared VPC",
+      "Hybrid & Interconnect",
+      "Load Balancing & CDN",
+      "Cloud NAT & PSC",
+      "Cloud DNS & Routing",
+      "Network Intelligence"
+    ],
+    "tiers": [
+      "NETWORK INTEL",
+      "CLOUD DNS & BGP",
+      "CLOUD NAT & PSC",
+      "ANYCAST LB & CDN",
+      "VPC & HYBRID"
+    ],
+    "tierDetails": [
+      {
+        "rows": [
+          0,
+          1
+        ],
+        "name": "Tier 1 (1–20): VPC, Shared VPC & Hybrid Foundation"
+      },
+      {
+        "rows": [
+          2,
+          3
+        ],
+        "name": "Tier 2 (21–40): 99.99% Interconnect, HA VPN & BGP"
+      },
+      {
+        "rows": [
+          4,
+          5
+        ],
+        "name": "Tier 3 (41–60): Global Load Balancing & Cloud CDN"
+      },
+      {
+        "rows": [
+          6,
+          7
+        ],
+        "name": "Tier 4 (61–80): Cloud NAT, Private Service Connect & DNS"
+      },
+      {
+        "rows": [
+          8,
+          9
+        ],
+        "name": "Tier 5 (81–100): Network Intelligence & Autonomous Ops"
+      }
+    ],
+    "milestones": {
+      "1": {
+        "shortTag": "Single VPC",
+        "badge": "NETWORK ORIGIN",
+        "jump": "Square 1",
+        "title": "Single Custom-Mode VPC & Subnet Plan",
+        "quip": "\"One clean custom-mode VPC, a fresh RFC 1918 IPAM spreadsheet, and dreams of global Anycast scale.\"",
+        "tip": "Start with custom-mode VPCs, non-overlapping IPAM CIDRs, Shared VPC host/service separation, and Private Google Access.",
+        "docLabel": "Google Cloud Networking Overview",
+        "docUrl": "https://docs.cloud.google.com/vpc/docs/overview"
+      },
+      "100": {
+        "shortTag": "99.99% Mesh!",
+        "badge": "GLOBAL BACKBONE NIRVANA",
+        "jump": "Square 100 · Global Mesh",
+        "title": "Global Anycast, 99.99% Hybrid Interconnect & PSC Mesh!",
+        "quip": "\"Sub-10ms Anycast edge routing, 99.99% dual-metro Interconnect with BFD, zero-overlap PSC, and 100% passing Connectivity Tests!\"",
+        "tip": "World-class cloud networking combines Shared VPC / NCC hubs, 99.99% redundant hybrid connectivity, Global Load Balancing + Cloud CDN, Private Service Connect, and Network Intelligence Center verification.",
+        "docLabel": "Network Intelligence Center Overview",
+        "docUrl": "https://docs.cloud.google.com/network-intelligence-center/docs/overview"
+      }
+    }
+  },
+  "ladders": [
+    {
+      "id": "net-ld-shared-vpc",
+      "shortTag": "Shared VPC",
+      "title": "Centralized Shared VPC Host & Service Project Architecture",
+      "quip": "\"Consolidated 35 team VPCs into a centralized Shared VPC Host Project and delegated subnet-level `roles/compute.networkUser` bindings to individual Service Projects. Eliminated complex VPC peering meshes while allowing application teams to deploy GKE and Compute Engine independently inside centrally governed subnets.\"",
+      "tip": "Use Shared VPC to separate central network/security administration (Host Project) from decentralized workload ownership (Service Projects).",
+      "docLabel": "Shared VPC Overview",
+      "docUrl": "https://docs.cloud.google.com/vpc/docs/shared-vpc",
+      "q": "How do you grant a Service Project team permission to launch VMs and GKE nodes in only one specific subnet of a Shared VPC Host Project?",
+      "opts": [
+        "Grant `roles/compute.networkUser` to the Service Project's principals and service accounts at the individual Shared VPC subnet resource level rather than at the entire Host Project level",
+        "Grant `roles/owner` on the Shared VPC Host Project to every developer",
+        "Create a separate VPC Peering connection for every single VM"
+      ],
+      "ans": 0,
+      "why": "Subnet-level `roles/compute.networkUser` bindings enforce least-privilege network isolation between different Service Projects sharing the same Host VPC."
+    },
+    {
+      "id": "net-ld-ncc-hub",
+      "shortTag": "NCC HubSpoke",
+      "title": "Enterprise Scale via Network Connectivity Center (NCC) Hub & Spoke",
+      "quip": "\"Migrated a tangled web of VPC Peerings and VPNs to a Network Connectivity Center (NCC) hub connecting VPC spokes and hybrid Interconnect spokes with Star/Mesh topology. Scaled inter-VPC and hybrid connectivity across dozens of VPCs with centralized route tables and full transitivity where configured.\"",
+      "tip": "Use Network Connectivity Center (NCC) as a centralized transit hub for multi-VPC and hybrid connectivity at enterprise scale.",
+      "docLabel": "Network Connectivity Center Overview",
+      "docUrl": "https://docs.cloud.google.com/network-connectivity/docs/network-connectivity-center/concepts/overview",
+      "q": "What architectural limitation of standard VPC Network Peering does Network Connectivity Center (NCC) with VPC spokes solve for large enterprises?",
+      "opts": [
+        "NCC allows VMs to operate without IP addresses",
+        "NCC provides a centralized hub-and-spoke control plane (supporting full-mesh or star group topologies and hybrid transitivity) instead of managing O(N²) pairwise non-transitive peerings",
+        "NCC replaces the TCP/IP stack with Morse code"
+      ],
+      "ans": 1,
+      "why": "Network Connectivity Center centralizes route exchange across VPC spokes and hybrid spokes without the operational complexity of pairwise VPC Peering meshes."
+    },
+    {
+      "id": "net-ld-hier-fw",
+      "shortTag": "HierFirewall",
+      "title": "Hierarchical Firewall Policies with IAM-Governed Secure Tags",
+      "quip": "\"Deployed Hierarchical Firewall Policies at the Organization and Folder nodes using `goto_next` delegation and IAM-governed Secure Tags (`tagValues/`) on workloads. Guaranteed mandatory baseline ingress blocks (such as blocking external RDP/SSH) across every VPC while preventing VM owners from spoofing network tags.\"",
+      "tip": "Use Hierarchical and Global Network Firewall Policies with IAM-protected Secure Tags instead of mutable legacy network tags.",
+      "docLabel": "Hierarchical Firewall Policies",
+      "docUrl": "https://docs.cloud.google.com/firewall/docs/firewall-policies-overview",
+      "q": "Why are IAM-governed Firewall Secure Tags (`resourceManager.tagValues`) superior to legacy Compute Engine network tags for security-critical firewall rules?",
+      "opts": [
+        "Legacy network tags only work on IPv6 networks",
+        "Secure Tags automatically double the network bandwidth of a VM",
+        "Binding a Secure Tag requires explicit IAM `tagUser` permission, whereas any user with `compute.instances.setTags` (or VM Editor) can arbitrarily add or remove legacy network tags"
+      ],
+      "ans": 2,
+      "why": "Secure Tags are governed by Resource Manager IAM policies and evaluate cryptographically in the Andromeda software-defined network."
+    },
+    {
+      "id": "net-ld-ic-9999",
+      "shortTag": "99.99% Intrc",
+      "title": "99.99% SLA Dedicated Interconnect (Dual-Metro Redundant Topology)",
+      "quip": "\"Provisioned four 100 Gbps Dedicated Interconnect connections across two distinct Edge Availability Domains (metros) connected to four Cloud Routers across two GCP regions. Achieved a backed 99.99% hybrid availability SLA and survived a full metropolitan fiber cut with zero packet drop.\"",
+      "tip": "A 99.99% Cloud Interconnect SLA requires 4 redundant connections split across 2 separate metropolitan Edge Availability Domains and 2 GCP regions.",
+      "docLabel": "Establish 99.99% Availability for Dedicated Interconnect",
+      "docUrl": "https://docs.cloud.google.com/network-connectivity/docs/interconnect/tutorials/dedicated-creating-9999-availability",
+      "q": "What physical and logical topology is required to qualify for the 99.99% availability SLA on Dedicated Cloud Interconnect?",
+      "opts": [
+        "At least 4 Interconnect connections across 2 distinct metropolitan Edge Availability Domains (2 per metro), with VLAN attachments terminating on Cloud Routers in at least 2 GCP regions (with global routing enabled)",
+        "A single 10 Gbps link plugged into one on-premises router with two VLAN tags",
+        "Two IPSec tunnels over the public internet using Classic VPN"
+      ],
+      "ans": 0,
+      "why": "True 99.99% Interconnect resilience eliminates single points of failure across colocation facilities, metro fiber paths, and regional Cloud Routers."
+    },
+    {
+      "id": "net-ld-havpn-bfd",
+      "shortTag": "HA VPN + BFD",
+      "title": "HA VPN with Dynamic BGP & Sub-Second BFD Failover",
+      "quip": "\"Deployed Dual-Interface HA VPN gateways paired with Cloud Router dynamic BGP and Bidirectional Forwarding Detection (BFD) set to 300ms intervals. Cut hybrid tunnel failover convergence time from 60 seconds (BGP hold timer) down to under 1 second during ISP path flaps.\"",
+      "tip": "Always pair HA VPN (two tunnels across AWS/on-prem interfaces for 99.99% SLA) with Bidirectional Forwarding Detection (BFD) on BGP sessions.",
+      "docLabel": "HA VPN Overview & BFD",
+      "docUrl": "https://docs.cloud.google.com/network-connectivity/docs/vpn/concepts/topologies",
+      "q": "How does enabling Bidirectional Forwarding Detection (BFD) on a Cloud Router BGP session improve HA VPN or Cloud Interconnect availability?",
+      "opts": [
+        "BFD compresses video files stored in Cloud Storage",
+        "BFD exchanges lightweight sub-second heartbeats to detect data-plane forwarding failures rapidly and trigger immediate BGP route failover without waiting for the 60-second BGP hold timer",
+        "BFD allows BGP to operate without IP addresses"
+      ],
+      "ans": 1,
+      "why": "BFD detects unidirectional or bidirectional forwarding failures in milliseconds and signals Cloud Router BGP to switch to the healthy backup path immediately."
+    },
+    {
+      "id": "net-ld-macsec",
+      "shortTag": "MACsec L2Enc",
+      "title": "Wire-Speed Layer-2 Encryption with MACsec for Cloud Interconnect",
+      "quip": "\"Enabled IEEE 802.1AE MACsec encryption on Dedicated Cloud Interconnect links between the on-premises core routers and Google's edge routers. Achieved line-rate 100 Gbps Layer-2 encryption across colocation cross-connects without the throughput cap of IPSec VPN tunnels.\"",
+      "tip": "Use MACsec for Cloud Interconnect (or HA VPN over Interconnect) when compliance requires encrypting traffic traversing colocation fiber.",
+      "docLabel": "MACsec for Cloud Interconnect",
+      "docUrl": "https://docs.cloud.google.com/network-connectivity/docs/interconnect/concepts/macsec",
+      "q": "What is the primary advantage of enabling MACsec for Cloud Interconnect compared to running IPSec VPN tunnels without hardware offload?",
+      "opts": [
+        "MACsec eliminates the need for Cloud Routers or BGP",
+        "MACsec works over dial-up telephone modems",
+        "MACsec provides line-rate IEEE 802.1AE Layer-2 hop-by-hop encryption directly on the 10 Gbps or 100 Gbps Interconnect physical link without per-tunnel IPSec throughput bottlenecks"
+      ],
+      "ans": 2,
+      "why": "MACsec encrypts Ethernet frames at wire speed between your on-premises router and Google's edge router."
+    },
+    {
+      "id": "net-ld-glb-anycast",
+      "shortTag": "Global ALB",
+      "title": "Global External Application Load Balancer with Multi-Region NEGs",
+      "quip": "\"Deployed a Global External Application Load Balancer on Premium Network Tier fronting container-native `GCE_VM_IP_PORT` NEGs in `us-central1`, `europe-west1`, and `asia-east1`. Absorbed a regional maintenance drain seamlessly by shifting global users to the next closest healthy region from a single Anycast IPv4/IPv6 VIP.\"",
+      "tip": "Use the Global External Application Load Balancer on Premium Network Tier for single-Anycast-IP global routing and automatic cross-region overflow/failover.",
+      "docLabel": "External Application Load Balancer Overview",
+      "docUrl": "https://docs.cloud.google.com/load-balancing/docs/https",
+      "q": "How does a Global External Application Load Balancer on Google Cloud's Premium Network Tier route user traffic to multi-region backends?",
+      "opts": [
+        "Users connect to a single global Anycast VIP at the closest Google Front End (GFE) PoP, which terminates TLS at the edge and routes over Google's private backbone to the closest healthy backend region with available capacity",
+        "It uses round-robin DNS with a 24-hour TTL to send users randomly across public internet hops",
+        "All global traffic must pass through a single VM in `us-central1` first"
+      ],
+      "ans": 0,
+      "why": "Premium Tier Global ALB enters Google's fiber backbone at the edge PoP nearest the user and routes intelligently by proximity and backend capacity."
+    },
+    {
+      "id": "net-ld-cdn-signed",
+      "shortTag": "CloudCDN Key",
+      "title": "Cloud CDN Custom Cache Keys & Signed URLs at 98% Hit Ratio",
+      "quip": "\"Enabled Cloud CDN with custom Cache Keys (stripping tracking query strings `utm_*`) and Signed Cookies for premium media segments. Raised edge cache hit ratio from 41% to 98.4% and cut origin egress bandwidth by 18 TB/day while enforcing paid subscriber access.\"",
+      "tip": "Tune Cloud CDN Cache Keys to exclude non-content query parameters and use Signed URLs/Cookies for authenticated edge caching.",
+      "docLabel": "Cloud CDN Cache Keys & Signed URLs",
+      "docUrl": "https://docs.cloud.google.com/cdn/docs/caching",
+      "q": "Why did stripping marketing query parameters (`utm_source`, `fbclid`) from the Cloud CDN Cache Key dramatically increase the cache hit ratio?",
+      "opts": [
+        "Cloud CDN cannot cache files larger than 1 KB if query strings are present",
+        "By default, unique query strings create separate cache entries; excluding non-content tracking parameters allows all users requesting the same asset to hit a single shared edge cache entry",
+        "Marketing parameters disable HTTPS TLS 1.3"
+      ],
+      "ans": 1,
+      "why": "Customizing the Cloud CDN Cache Key to include only content-determining parameters prevents cache fragmentation from tracking tags."
+    },
+    {
+      "id": "net-ld-ilb-nexthop",
+      "shortTag": "ILB NextHop",
+      "title": "HA Firewall Appliance Bump-in-the-Wire via Internal NLB Next-Hop",
+      "quip": "\"Placed an autoscaled Managed Instance Group of Palo Alto NGFW appliances behind an Internal Passthrough Network Load Balancer configured as a VPC custom route next-hop (`--next-hop-ilb`). Inspected east-west traffic between hub and spoke VPCs with symmetric hashing and automatic instant health-check failover.\"",
+      "tip": "Use an Internal Passthrough Network Load Balancer as a VPC route next-hop (`next-hop-ilb`) to scale stateful NVA inspection appliances with high availability.",
+      "docLabel": "Internal Passthrough NLB as Next Hop",
+      "docUrl": "https://docs.cloud.google.com/load-balancing/docs/internal/setting-up-internal-lb-next-hop",
+      "q": "Why do you place stateful Network Virtual Appliances (NVAs) behind an Internal Passthrough Network Load Balancer configured as a route next-hop (`--next-hop-ilb`)?",
+      "opts": [
+        "It terminates HTTPS and rewrites HTML pages inside the load balancer",
+        "It converts TCP packets into avian carriers",
+        "It distributes flows across multiple healthy NVA instances using consistent 5-tuple hashing and automatically removes failed appliances from the forwarding path upon health-check failure"
+      ],
+      "ans": 2,
+      "why": "Internal Passthrough NLB preserves client/destination IPs and uses symmetric hashing to scale stateful inspection appliances seamlessly."
+    },
+    {
+      "id": "net-ld-psc-endpoint",
+      "shortTag": "PSC Endpoint",
+      "title": "Zero-Peering SaaS & Database Consumption via Private Service Connect",
+      "quip": "\"Connected consumer application VPCs to producer AlloyDB, Cloud SQL, and third-party SaaS services using Private Service Connect (PSC) endpoints and Service Attachments. Enabled private, unidirectional consumption across organizations despite overlapping `10.0.0.0/8` CIDRs without consuming VPC Peering slots.\"",
+      "tip": "Use Private Service Connect (PSC) to publish and consume managed services privately across VPCs and organizations with zero CIDR overlap issues.",
+      "docLabel": "Private Service Connect Overview",
+      "docUrl": "https://docs.cloud.google.com/vpc/docs/private-service-connect",
+      "q": "How does Private Service Connect (PSC) allow a consumer VPC and a producer VPC to communicate privately even when both VPCs use the exact same `10.10.0.0/16` subnet CIDR?",
+      "opts": [
+        "The consumer connects to a local PSC Endpoint IP in its own VPC, and Andromeda performs NAT into a dedicated producer PSC NAT subnet attached to the Service Attachment, isolating both routing tables",
+        "PSC forces both VPCs to renumber all VMs to public IPv4 addresses",
+        "PSC disables IP routing and uses Bluetooth between data centers"
+      ],
+      "ans": 0,
+      "why": "Private Service Connect decouples consumer and producer address spaces via NAT at the Service Attachment boundary, supporting overlapping CIDRs and unidirectional initiation."
+    },
+    {
+      "id": "net-ld-nat-dynamic",
+      "shortTag": "Dynamic NAT",
+      "title": "Cloud NAT Dynamic Port Allocation for High-Concurrency GKE Nodes",
+      "quip": "\"Enabled Cloud NAT Dynamic Port Allocation (`--enable-dynamic-port-allocation`, `min-ports-per-vm=256`, `max-ports-per-vm=32768`) for a GKE cluster calling external payment gateways. Scaled outbound port allocation on demand during Black Friday traffic spikes while conserving NAT IP address utilization.\"",
+      "tip": "Enable Dynamic Port Allocation on Cloud NAT so bursty workloads (like GKE nodes) scale ports up to `maxPortsPerVm` when needed without exhausting NAT IPs upfront.",
+      "docLabel": "Cloud NAT Dynamic Port Allocation",
+      "docUrl": "https://docs.cloud.google.com/nat/docs/ports-and-addresses#dynamic-port",
+      "q": "How does Dynamic Port Allocation in Cloud NAT improve both scalability and IP efficiency compared to Static Port Allocation?",
+      "opts": [
+        "It assigns 65,535 dedicated public IPv4 addresses to every idle VM",
+        "It assigns every VM a small initial `minPortsPerVm` reservation and dynamically allocates additional port blocks up to `maxPortsPerVm` only to VMs experiencing high concurrent outbound connection demand",
+        "It routes outbound traffic without using TCP or UDP port numbers"
+      ],
+      "ans": 1,
+      "why": "Dynamic Port Allocation prevents idle VMs from hoarding NAT ports while allowing active GKE/Compute nodes to scale up to 32k–64k ports on demand."
+    },
+    {
+      "id": "net-ld-psc-backend",
+      "shortTag": "PSC NEG Bckd",
+      "title": "Global Load Balancer to Producer Service via PSC Network Endpoint Groups",
+      "quip": "\"Exposed a microservice running in an isolated partner VPC behind our centralized Global External Application Load Balancer using a Private Service Connect NEG backend. Applied centralized Cloud Armor WAF, TLS termination, and vanity domains at the edge while keeping the producer VPC completely isolated.\"",
+      "tip": "Use Private Service Connect NEGs (`PRIVATE_SERVICE_CONNECT`) to route traffic from Cloud Load Balancing to published services in separate VPCs or Google APIs.",
+      "docLabel": "About Private Service Connect Backends",
+      "docUrl": "https://docs.cloud.google.com/load-balancing/docs/https/setting-up-psc-back-ends",
+      "q": "What does a Private Service Connect Network Endpoint Group (PSC NEG) allow a Cloud Load Balancer to target as a backend?",
+      "opts": [
+        "Only local floppy drives attached to the load balancer",
+        "Unencrypted FTP servers over port 21 only",
+        "Either a published Service Attachment in another VPC/organization or regional/global Google APIs, without requiring VPC Network Peering"
+      ],
+      "ans": 2,
+      "why": "PSC NEGs connect load balancers directly to producer Service Attachments or Google API bundles across administrative boundaries."
+    },
+    {
+      "id": "net-ld-dns-hybrid",
+      "shortTag": "Hybrid DNS",
+      "title": "Bidirectional Hybrid DNS with Cloud DNS Forwarding & Peering Zones",
+      "quip": "\"Configured Cloud DNS Outbound Forwarding Zones to on-premises Active Directory DNS and an Inbound Server Policy (`35.199.192.0/19`) advertised over HA VPN/Interconnect. Achieved seamless bidirectional name resolution between `*.corp.internal` on-premises hosts and `*.gcp.internal` Private Zones across all Service Projects.\"",
+      "tip": "Combine Cloud DNS Inbound Server Policies, Outbound Forwarding Zones, and DNS Peering to unify hybrid and multi-VPC name resolution.",
+      "docLabel": "Cloud DNS Best Practices for Hybrid DNS",
+      "docUrl": "https://docs.cloud.google.com/dns/docs/best-practices",
+      "q": "When you enable a Cloud DNS Inbound Server Policy on a VPC so on-premises hosts can resolve Cloud DNS Private Zones, which destination IP range must you advertise over BGP to on-premises?",
+      "opts": [
+        "The dedicated regional inbound forwarding IP addresses allocated by the Inbound Server Policy from the VPC's subnets",
+        "The Google public DNS address `8.8.8.8`",
+        "The metadata server address `169.254.169.254`"
+      ],
+      "ans": 0,
+      "why": "Enabling an Inbound Server Policy allocates internal IP entry points in each subnet of the VPC, which on-premises DNS forwarders query over VPN/Interconnect."
+    },
+    {
+      "id": "net-ld-dnssec-rpz",
+      "shortTag": "DNSSEC & RPZ",
+      "title": "Cloud DNS Response Policy Zones (RPZ) & Managed DNSSEC",
+      "quip": "\"Enabled managed DNSSEC on public zones and attached a Cloud DNS Response Policy with Threat Intelligence feeds to block malware C2 domain resolution inside VPCs. Prevented DNS cache poisoning on public domains and sinkholed outbound C2 callbacks at the recursive resolver layer.\"",
+      "tip": "Enable managed DNSSEC on authoritative public zones and use Cloud DNS Response Policies (RPZ) to intercept malicious internal DNS queries.",
+      "docLabel": "Cloud DNS Response Policies & DNSSEC",
+      "docUrl": "https://docs.cloud.google.com/dns/docs/zones/manage-response-policies",
+      "q": "What capability does a Cloud DNS Response Policy (RPZ) provide for workloads running inside a Google Cloud VPC?",
+      "opts": [
+        "It automatically renews expired domain registrations with ICANN",
+        "It lets administrators override, block (`NXDOMAIN`), or redirect DNS queries matching specific domain names or wildcards before recursive resolution completes",
+        "It encrypts SQL tables inside Cloud Spanner"
+      ],
+      "ans": 1,
+      "why": "Cloud DNS Response Policies act as a DNS firewall inside your VPC, intercepting queries to known malicious domains or overriding split-horizon records."
+    },
+    {
+      "id": "net-ld-bgp-custom",
+      "shortTag": "CustomBGPAdv",
+      "title": "Cloud Router Custom Route Advertisements for Private Google Access & PSC",
+      "quip": "\"Configured Cloud Router BGP sessions in Custom Advertisement mode to advertise subnet ranges plus `199.36.153.4/30` (`restricted.googleapis.com`) and PSC endpoint `/32` IPs to on-premises. Allowed on-premises servers to access Google Cloud APIs and Private Service Connect endpoints privately over Cloud Interconnect without public internet egress.\"",
+      "tip": "Use Cloud Router Custom Route Advertisements to expose Private Google Access VIPs (`199.36.153.4/30` or `199.36.153.8/30`) and PSC endpoints to hybrid networks.",
+      "docLabel": "Advertise Custom Address Ranges on Cloud Router",
+      "docUrl": "https://docs.cloud.google.com/network-connectivity/docs/router/how-to/advertising-overview",
+      "q": "Why doesn't an on-premises server automatically receive a route to `199.36.153.4/30` (`restricted.googleapis.com`) from Cloud Router in default advertisement mode?",
+      "opts": [
+        "BGP does not support `/30` subnet masks",
+        "On-premises routers cannot route IP addresses starting with `199`",
+        "Cloud Router's default advertisement mode only advertises the VPC's subnet IP ranges; non-subnet ranges like `199.36.153.4/30` must be explicitly added as Custom Advertised Routes"
+      ],
+      "ans": 2,
+      "why": "Because `199.36.153.4/30` is a Google API virtual range rather than a VPC subnet CIDR, you must add it via Cloud Router Custom Advertised Routes."
+    },
+    {
+      "id": "net-ld-conn-tests",
+      "shortTag": "ConnectTests",
+      "title": "Automated Pre-Change Verification with Connectivity Tests",
+      "quip": "\"Integrated Network Intelligence Center Connectivity Tests (`gcloud network-management connectivity-tests`) into the Terraform CI/CD pipeline to verify reachability across firewalls, routes, and VPNs. Caught a shadowed deny firewall rule in staging in 12 seconds before it could block production payment traffic.\"",
+      "tip": "Run Network Intelligence Center Connectivity Tests programmatically to combine control-plane configuration analysis with live data-plane packet probing.",
+      "docLabel": "Connectivity Tests Overview",
+      "docUrl": "https://docs.cloud.google.com/network-intelligence-center/docs/connectivity-tests/concepts/overview",
+      "q": "How does Network Intelligence Center Connectivity Tests verify whether traffic between two endpoints will succeed even if the source VM is stopped or has no agent installed?",
+      "opts": [
+        "It performs static control-plane configuration analysis of Andromeda routes, firewall rules, VPC peering, PSC, and IAM policies along the simulated packet path, plus optional live data-plane probing",
+        "It SSHes into the source VM using a hardcoded root password to run `ping`",
+        "It reboots both endpoints and checks if they come back online"
+      ],
+      "ans": 0,
+      "why": "Connectivity Tests simulate packet headers through Google's SDN control plane model to pinpoint the exact route or firewall rule allowing or dropping traffic."
+    },
+    {
+      "id": "net-ld-flow-logs",
+      "shortTag": "VPC FlowLogs",
+      "title": "Filtered & Sampled VPC Flow Logs Streamed to BigQuery Analytics",
+      "quip": "\"Enabled VPC Flow Logs on critical subnets with `5-second` aggregation, `0.5` sampling rate, metadata annotations, and a filter expression targeting inter-zone and external flows. Identified cross-zone chatty microservices costing $14k/month in inter-zone egress while keeping logging ingestion volume lean.\"",
+      "tip": "Use VPC Flow Logs with filter expressions and tuned sampling intervals to gain deep traffic visibility without unnecessary log ingestion cost.",
+      "docLabel": "VPC Flow Logs Overview",
+      "docUrl": "https://docs.cloud.google.com/vpc/docs/flow-logs",
+      "q": "Where are VPC Flow Logs captured in Google Cloud's Andromeda software-defined network, and what is their performance impact on VM CPU/bandwidth?",
+      "opts": [
+        "They require a heavy Java agent inside every VM that consumes 25% of guest CPU",
+        "They are captured directly at the Andromeda virtual network hypervisor layer with zero packet delay and zero guest VM CPU or bandwidth overhead",
+        "They route all packets through an external hardware tap in another continent"
+      ],
+      "ans": 1,
+      "why": "Andromeda records telemetry out-of-band at the host virtual switch layer, adding zero latency or CPU overhead to guest VMs."
+    },
+    {
+      "id": "net-ld-net-analyzer",
+      "shortTag": "NetAnalyzer",
+      "title": "Proactive GKE Subnet & Route Diagnostics via Network Analyzer",
+      "quip": "\"Used Network Intelligence Center Network Analyzer to detect that a GKE secondary Pod IP range had reached 82% utilization and that an ILB health-check firewall rule was partially shadowed. Expanded the GKE multi-pod CIDR range and fixed the firewall rule days before pod scheduling or load balancing could fail.\"",
+      "tip": "Review Network Analyzer insights continuously to catch IP exhaustion, shadowed routes, broken peering paths, and load balancer misconfigurations automatically.",
+      "docLabel": "Network Analyzer Overview",
+      "docUrl": "https://docs.cloud.google.com/network-intelligence-center/docs/network-analyzer/overview",
+      "q": "What types of networking failures does Network Intelligence Center's Network Analyzer detect automatically without manual configuration?",
+      "opts": [
+        "Spelling errors inside application HTML templates",
+        "Expired SSL certificates on employee laptops",
+        "Subnet and GKE Pod/Service IP utilization exhaustion, invalid or shadowed dynamic routes, blocked Load Balancer health checks, and DNS forwarding misconfigurations"
+      ],
+      "ans": 2,
+      "why": "Network Analyzer continuously evaluates VPC, GKE, Load Balancing, and hybrid telemetry to surface root-cause insights before outages occur."
+    }
+  ],
+  "snakes": [
+    {
+      "id": "net-sn-peering-transitive",
+      "shortTag": "NoTransitive",
+      "title": "Assumed Transitive Routing Across Three Peered VPCs (A ↔ B ↔ C)",
+      "quip": "\"The team peered `vpc-app` (A) with `vpc-hub` (B), and `vpc-hub` (B) with `vpc-db` (C), expecting `vpc-app` to reach databases in `vpc-db` through `vpc-hub`. Go-live failed completely because VPC Network Peering is strictly non-transitive: packets from `vpc-app` to `vpc-db` were dropped at the source.\"",
+      "tip": "VPC Network Peering is strictly non-transitive; only directly peered VPCs exchange routes unless you use Network Connectivity Center (NCC), Private Service Connect, or an NVA router.",
+      "prevent": "Use Network Connectivity Center (NCC) VPC spokes, Shared VPC, or Private Service Connect endpoints instead of chaining VPC Peerings.",
+      "detect": "Network Intelligence Center Connectivity Tests showing `DROPPED_NO_ROUTE` between non-adjacent peered VPCs.",
+      "recover": "Deploy a Private Service Connect endpoint between `vpc-app` and `vpc-db`, or migrate the VPCs into a Network Connectivity Center hub.",
+      "docLabel": "VPC Network Peering Specifications",
+      "docUrl": "https://docs.cloud.google.com/vpc/docs/vpc-peering",
+      "q": "If `VPC-A` is peered with `VPC-B`, and `VPC-B` is peered with `VPC-C` (without direct `A-C` peering), can a VM in `VPC-A` communicate directly with a VM in `VPC-C` over VPC Network Peering?",
+      "opts": [
+        "Yes — BGP automatically redistributes all routes across up to 10 hops of VPC Peering",
+        "No — VPC Network Peering is strictly non-transitive; routes from `VPC-C` are not propagated through `VPC-B` to `VPC-A`",
+        "Yes — as long as all three VPCs are in the `us-central1` region"
+      ],
+      "ans": 1,
+      "why": "VPC Network Peering only exchanges routes between directly peered networks; for multi-VPC hub-and-spoke transitivity, use Network Connectivity Center or PSC."
+    },
+    {
+      "id": "net-sn-cidr-overlap",
+      "shortTag": "CIDR Overlap",
+      "title": "Acquired Company's `10.128.0.0/9` Auto-Mode VPC Collided with Prod VPC",
+      "quip": "\"Both the parent company and an acquired subsidiary left their VPCs in `auto-mode`, which allocates the exact same `10.128.0.0/9` regional subnets in every project. VPC Peering and HA VPN route exchange immediately rejected connection attempts due to identical overlapping `10.128.0.0/20` subnet CIDRs.\"",
+      "tip": "Never use `auto-mode` VPCs in production; always create `custom-mode` VPCs with non-overlapping RFC 1918 IPAM allocations (and use PSC when overlap is unavoidable).",
+      "prevent": "Enforce Organization Policy `constraints/compute.skipDefaultNetworkCreation` and allocate unique custom-mode CIDRs from a central IPAM registry.",
+      "detect": "Network Analyzer overlapping route warnings and VPC Peering creation errors.",
+      "recover": "Convert or migrate out of auto-mode VPCs, or use Private Service Connect (PSC) endpoints and Service Attachments to bridge services across overlapping CIDRs.",
+      "docLabel": "VPC Network Types (Auto vs Custom)",
+      "docUrl": "https://docs.cloud.google.com/vpc/docs/vpc#subnet-ranges",
+      "q": "Why is creating `auto-mode` VPC networks strongly discouraged for enterprise environments that plan to use VPC Peering, Shared VPC, or Hybrid VPN?",
+      "opts": [
+        "Auto-mode VPCs do not support TCP traffic on port 443",
+        "Auto-mode VPCs delete all VMs every 24 hours",
+        "Every `auto-mode` VPC uses the exact same predefined `10.128.0.0/9` address block and regional `/20` subnets, causing immediate IP CIDR overlap conflicts when connecting networks"
+      ],
+      "ans": 2,
+      "why": "Because every auto-mode VPC shares identical regional CIDR blocks inside `10.128.0.0/9`, two auto-mode VPCs can never be peered directly."
+    },
+    {
+      "id": "net-sn-tag-spoof",
+      "shortTag": "LegacyTagSpf",
+      "title": "Developer Added `prod-db-client` Legacy Network Tag to Dev VM in Shared VPC",
+      "quip": "\"A firewall rule allowing access to the production database relied on legacy Compute Engine network tag `sourceTags: ['prod-db-client']` rather than Service Accounts or Secure Tags. A developer with Compute Instance Admin in a dev Service Project attached the string tag `prod-db-client` to their sandbox VM and gained network reachability to prod DBs.\"",
+      "tip": "Any user who can edit a VM in a Shared VPC can set arbitrary legacy network tag strings; use IAM-governed Secure Tags (`resourceManager.tagValues`) or Service Accounts.",
+      "prevent": "Use Hierarchical/Network Firewall Policies with IAM-governed Secure Tags (`tagValues`) where only authorized CI/CD principals hold `roles/resourcemanager.tagUser`.",
+      "detect": "Cloud Audit Logs `compute.instances.setTags` events and Firewall Insights rule audits.",
+      "recover": "Replace legacy `sourceTags`/`targetTags` firewall rules with IAM-governed Firewall Secure Tags.",
+      "docLabel": "IAM-Governed Tags for Firewalls",
+      "docUrl": "https://docs.cloud.google.com/firewall/docs/use-tags-for-firewalls",
+      "q": "In a Shared VPC where multiple teams have `roles/compute.instanceAdmin.v1` in their respective Service Projects, why is using legacy network tags (`sourceTags`) in firewall rules risky?",
+      "opts": [
+        "Any Compute Instance Admin in any Service Project sharing that VPC can attach any arbitrary text string as a network tag to their VM and inherit the firewall allow rule",
+        "Legacy network tags are limited to 2 characters in length",
+        "Legacy network tags only work when the VM is powered off"
+      ],
+      "ans": 0,
+      "why": "Unlike Resource Manager Secure Tags (`tagValues`) which require explicit IAM `tagUser` permission, legacy network tags are unauthenticated free-text metadata on the VM."
+    },
+    {
+      "id": "net-sn-single-metro-ic",
+      "shortTag": "1-MetroIntrc",
+      "title": "Both Dedicated Interconnect Links Terminated in the Same Colocation Metro",
+      "quip": "\"The network team ordered two 10 Gbps Dedicated Interconnect links for redundancy, but placed both links inside the exact same colocation facility and Edge Availability Domain (`ead1`). During a scheduled metro maintenance window on `ead1`, both links went down simultaneously, dropping 100% of hybrid traffic and forfeiting the SLA.\"",
+      "tip": "Redundant links in the same Edge Availability Domain (EAD) can go down together during maintenance; split links across `ead1` and `ead2` (or two metros).",
+      "prevent": "Provision VLAN attachments across at least two distinct Edge Availability Domains (`metro-zone1` and `metro-zone2`) or two separate metros per Cloud Interconnect SLA rules.",
+      "detect": "Network Analyzer `INTERCONNECT_NON_REDUNDANT_TOPOLOGY` findings and Cloud Interconnect SLA compliance checker in Console.",
+      "recover": "Order a secondary Interconnect connection in a distinct Edge Availability Domain (or backup HA VPN over internet) and balance BGP routes across both.",
+      "docLabel": "Cloud Interconnect Redundancy & SLA",
+      "docUrl": "https://docs.cloud.google.com/network-connectivity/docs/interconnect/concepts/dedicated-overview#redundancy-and-sla",
+      "q": "Why did two Dedicated Interconnect connections located in the same colocation building AND the same Edge Availability Domain (`zone1`) both go offline during a planned Google maintenance event?",
+      "opts": [
+        "Dedicated Interconnect links automatically shut down every Sunday at noon",
+        "Devices inside the same Edge Availability Domain share a maintenance domain; to survive maintenance without downtime, connections must be placed in separate Edge Availability Domains (`zone1` and `zone2`)",
+        "BGP cannot run on two links at the same time"
+      ],
+      "ans": 1,
+      "why": "Edge Availability Domains (EADs) define distinct maintenance zones within a metro; splitting connections across EADs guarantees at least one path stays active during maintenance."
+    },
+    {
+      "id": "net-sn-asymmetric-bgp",
+      "shortTag": "AsymmtrcBGP",
+      "title": "Asymmetric BGP MED Priorities Caused Stateful On-Prem Firewall Drops",
+      "quip": "\"Egress traffic from GCP to on-premises preferred Tunnel 1 (lowest BGP MED from on-prem), while ingress traffic from on-premises to GCP preferred Tunnel 2 (local preference on-prem). A stateful on-premises firewall inspecting only Tunnel 1 saw TCP `SYN-ACK` packets without matching `SYN` packets and dropped every hybrid TCP connection after the handshake.\"",
+      "tip": "Keep BGP route priorities (MED and AS-Path prepending) symmetric across HA VPN / Interconnect tunnels when stateful firewalls sit in the path.",
+      "prevent": "Configure symmetric BGP base priorities (MED) on Cloud Router and matching Local Preference / AS-Path prepending on the peer on-premises routers.",
+      "detect": "Cloud Router BGP session metrics showing outbound bytes on Tunnel 1 and inbound bytes exclusively on Tunnel 2, plus TCP reset spikes.",
+      "recover": "Align the Cloud Router advertised route priority (MED) on both BGP sessions so active/passive or ECMP symmetry matches the on-premises router policy.",
+      "docLabel": "Cloud Router BGP Route Selection",
+      "docUrl": "https://docs.cloud.google.com/network-connectivity/docs/router/concepts/overview#route-selection",
+      "q": "How do you control which HA VPN tunnel an on-premises router prefers for traffic entering Google Cloud when one tunnel should be active and the other passive?",
+      "opts": [
+        "Rename the primary VPN tunnel to start with the letter `A`",
+        "Reboot the secondary Cloud Router every 5 minutes",
+        "Set a lower advertised route priority value (BGP MED — Multi-Exit Discriminator, e.g., `100` vs `200`, or AS-Path prepending) on the primary Cloud Router BGP session"
+      ],
+      "ans": 2,
+      "why": "Cloud Router exports its configured advertised route priority as a BGP MED attribute (where lower values are preferred by the peer router) and supports AS-Path prepending."
+    },
+    {
+      "id": "net-sn-DynamicRouting-regional",
+      "shortTag": "RegRoutingMd",
+      "title": "VPC Dynamic Routing Mode Left on `REGIONAL` Stranded `us-east1` Workloads",
+      "quip": "\"HA VPN tunnels terminated in `us-central1`, while application VMs were deployed in `us-east1` inside the same VPC, with VPC Dynamic Routing Mode left at the default `REGIONAL`. Cloud Router in `us-central1` only learned and programmed routes for `us-central1` subnets; `us-east1` VMs had zero connectivity to on-premises.\"",
+      "tip": "Set VPC Dynamic Routing Mode to `GLOBAL` whenever Cloud Routers in one region need to advertise and program routes for subnets in other regions.",
+      "prevent": "Set `--bgp-routing-mode=GLOBAL` on the VPC network so Cloud Routers advertise all regional subnets and propagate learned on-premises routes globally.",
+      "detect": "Network Analyzer `DYNAMIC_ROUTE_SHADOWED` / regional routing alerts and missing `us-east1` prefixes on the on-premises BGP table.",
+      "recover": "Update the VPC network dynamic routing mode from `REGIONAL` to `GLOBAL` (`gcloud compute networks update --bgp-routing-mode=GLOBAL`).",
+      "docLabel": "VPC Dynamic Routing Mode",
+      "docUrl": "https://docs.cloud.google.com/vpc/docs/vpc#routing_for_hybrid_networks",
+      "q": "What happens when a VPC network's Dynamic Routing Mode is set to `REGIONAL` instead of `GLOBAL`?",
+      "opts": [
+        "Cloud Routers in a given region only advertise subnets located in that same region to on-premises peers, and learned BGP routes are only programmed for VMs in that same region",
+        "VMs in different regions of the same VPC cannot ping each other over internal IPs",
+        "Global External Application Load Balancers stop working"
+      ],
+      "ans": 0,
+      "why": "Switching VPC Dynamic Routing Mode to `GLOBAL` enables Cloud Routers to advertise and program hybrid routes across all regions in the VPC."
+    },
+    {
+      "id": "net-sn-hc-fw-blocked",
+      "shortTag": "502 HlthChk",
+      "title": "Blocked Google Health Check Probes (`35.191.0.0/16`) Caused Global 502 Outage",
+      "quip": "\"A security engineer tightened VPC ingress firewall rules to allow only corporate office IPs, accidentally removing `35.191.0.0/16` and `130.211.0.0/22`. Every backend instance group failed health checks within 15 seconds, and the External Application Load Balancer returned `502 Bad Gateway` to 100% of users worldwide.\"",
+      "tip": "Google Cloud Load Balancers mark backends healthy ONLY if ingress firewall rules allow Google's health-check prober IP ranges (`35.191.0.0/16` and `130.211.0.0/22`).",
+      "prevent": "Place a high-priority allow rule for `35.191.0.0/16` and `130.211.0.0/22` in a Hierarchical/Network Firewall Policy above application-level rules.",
+      "detect": "Network Analyzer `LOAD_BALANCER_HEALTH_CHECK_FIREWALL_NOT_CONFIGURED` alert and `502` `failed_to_pick_backend` statusDetails in LB logs.",
+      "recover": "Immediately restore the VPC ingress allow rule for source ranges `35.191.0.0/16` and `130.211.0.0/22` targeting the backend service account or tag.",
+      "docLabel": "Health Check Firewall Rules",
+      "docUrl": "https://docs.cloud.google.com/load-balancing/docs/health-checks#fw-rule",
+      "q": "Why did a Global External Application Load Balancer immediately start returning `502 Bad Gateway` (`failed_to_pick_backend`) even though all backend VMs had `nginx` running and healthy locally?",
+      "opts": [
+        "The backend VMs did not have public IPv6 addresses assigned",
+        "A VPC firewall rule blocked ingress from Google's health-check and GFE proxy IP ranges (`35.191.0.0/16` and `130.211.0.0/22`), causing the load balancer to mark all backends unhealthy",
+        "Cloud DNS was disabled in the project"
+      ],
+      "ans": 1,
+      "why": "Without ingress access from `35.191.0.0/16` and `130.211.0.0/22`, Google Front Ends and health-check probers cannot verify or reach your backends."
+    },
+    {
+      "id": "net-sn-cdn-force-cache",
+      "shortTag": "CachedAuth!",
+      "title": "`FORCE_CACHE_ALL` Mode Cached Private `/api/profile` Responses Across Users",
+      "quip": "\"An engineer enabled Cloud CDN on the main API backend service and changed the Cache Mode from `CACHE_ALL_STATIC` to `FORCE_CACHE_ALL` to speed up JSON responses. Cloud CDN ignored the origin's `Cache-Control: private, no-store` headers and served User A's authenticated `/api/profile` JSON payload to User B!\"",
+      "tip": "Never enable `FORCE_CACHE_ALL` on backends serving authenticated or personalized responses; use `CACHE_ALL_STATIC` or `USE_ORIGIN_HEADERS`.",
+      "prevent": "Use `CACHE_ALL_STATIC` or `USE_ORIGIN_HEADERS` and separate static asset backends from dynamic authenticated API backends.",
+      "detect": "Synthetic auth canary checks and monitoring Cloud CDN `cacheId` hits on `/api/*` dynamic routes.",
+      "recover": "Switch Cache Mode back to `USE_ORIGIN_HEADERS` or `CACHE_ALL_STATIC` immediately and run a wildcard cache invalidation (`/*`) on the URL map.",
+      "docLabel": "Cloud CDN Cache Modes",
+      "docUrl": "https://docs.cloud.google.com/cdn/docs/cache-modes",
+      "q": "What dangerous side effect occurs if you set Cloud CDN Cache Mode to `FORCE_CACHE_ALL` on a backend service that returns personalized user data?",
+      "opts": [
+        "Cloud CDN deletes all files from the origin Cloud Storage bucket",
+        "Cloud CDN forces all users to download a browser extension",
+        "Cloud CDN unconditionally caches all successful 200 OK responses while ignoring origin `Cache-Control: private` or `Vary` headers, potentially serving one user's private response to other users"
+      ],
+      "ans": 2,
+      "why": "`FORCE_CACHE_ALL` overrides origin `Cache-Control` directives; personalized APIs must use `USE_ORIGIN_HEADERS` or bypass caching completely."
+    },
+    {
+      "id": "net-sn-proxy-subnet-full",
+      "shortTag": "ProxySubFull",
+      "title": "Tiny `/29` Regional Proxy-Only Subnet Blocked Envoy Proxy Autoscaling",
+      "quip": "\"A regional Internal Application Load Balancer was deployed using a tiny `/29` (6 usable IPs) `REGIONAL_MANAGED_PROXY` subnet. During a traffic surge, Google Cloud could not allocate additional Envoy proxy instances in the region because the proxy-only subnet ran out of IPs, throttling throughput.\"",
+      "tip": "Always size Regional Managed Proxy (`REGIONAL_MANAGED_PROXY`) subnets at `/23` (or at least `/24`) so Envoy proxy pools can scale smoothly.",
+      "prevent": "Provision `/23` (512 IPs) or `/24` (256 IPs) proxy-only subnets in each region in your foundational VPC Terraform modules.",
+      "detect": "Network Analyzer `PROXY_ONLY_SUBNET_IP_UTILIZATION_HIGH` alert and Cloud Monitoring subnet IP utilization metrics.",
+      "recover": "Expand the proxy-only subnet prefix length (`gcloud compute networks subnets expand-ip-range`) or migrate to a larger replacement proxy-only subnet.",
+      "docLabel": "Proxy-Only Subnets for Envoy-Based Load Balancers",
+      "docUrl": "https://docs.cloud.google.com/load-balancing/docs/proxy-only-subnets",
+      "q": "Why does Google Cloud recommend a `/23` (or minimum `/26`, ideally `/23`) prefix size when creating a `REGIONAL_MANAGED_PROXY` subnet for Envoy-based Regional Application Load Balancers?",
+      "opts": [
+        "Every regional Envoy proxy instance managed by Google across all regional Envoy load balancers in that VPC region consumes an IP from the proxy-only subnet as traffic scales and during rolling upgrades",
+        "Each HTTP request consumes a permanent IP address for 30 days",
+        "Subnets smaller than `/23` cannot route TCP traffic"
+      ],
+      "ans": 0,
+      "why": "Proxy-only subnets supply source IPs for Google-managed Envoy proxies; sizing at `/23` ensures ample headroom for autoscaling and zero-downtime proxy upgrades."
+    },
+    {
+      "id": "net-sn-nat-exhaustion",
+      "shortTag": "NATPortExhst",
+      "title": "Cloud NAT Port Exhaustion Dropped 35% of Outbound Payment Webhook Calls",
+      "quip": "\"A GKE node running 80 pods opened 4,000 concurrent connections to the same single external payment gateway IP:443 while Cloud NAT had static `64` ports/VM and 1 NAT IP. Packets dropped with `OUT_OF_RESOURCES` because Cloud NAT 5-tuple port limits per destination `(dst_ip, dst_port, proto)` and per-VM port quotas were exhausted.\"",
+      "tip": "Enable HTTP keep-alive connection pooling in apps, enable Cloud NAT Dynamic Port Allocation, and add multiple NAT IP addresses when hitting a single external destination IP heavily.",
+      "prevent": "Enable Dynamic Port Allocation (`maxPortsPerVm`), provision multiple NAT IP addresses, and use HTTP/2 or connection pooling in application clients.",
+      "detect": "Cloud Monitoring metric `router.googleapis.com/nat/port_usage` and `nat/dropped_sent_packets_count` (`reason = OUT_OF_RESOURCES`).",
+      "recover": "Increase `minPortsPerVm` / enable Dynamic Port Allocation on Cloud NAT, attach additional external NAT IP addresses, and enable connection reuse in the microservice.",
+      "docLabel": "Troubleshoot Cloud NAT Port Exhaustion",
+      "docUrl": "https://docs.cloud.google.com/nat/docs/troubleshooting#port-exhaustion",
+      "q": "A VM behind Cloud NAT makes thousands of concurrent TCP connections to a SINGLE external API endpoint (`203.0.113.10:443`) and hits `OUT_OF_RESOURCES` drops even with 4,096 ports allocated. What two actions resolve this?",
+      "opts": [
+        "Disable Private Google Access on the subnet",
+        "Enable HTTP connection pooling (keep-alive) in the client AND ensure Cloud NAT has sufficient ports/multiple NAT IPs (since each NAT IP has a limited number of unique source ports per single destination IP:port tuple)",
+        "Change the VPC MTU from 1460 to 1500"
+      ],
+      "ans": 1,
+      "why": "When communicating with a single destination `(IP, port, protocol)` tuple, unique source ports per NAT IP are finite; connection pooling plus Dynamic Port Allocation and multiple NAT IPs prevent exhaustion."
+    },
+    {
+      "id": "net-sn-psc-nat-exhaust",
+      "shortTag": "PSCNATFull",
+      "title": "Producer PSC NAT Subnet Exhausted IPs When 200 Consumer Endpoints Connected",
+      "quip": "\"A SaaS producer published a Private Service Connect Service Attachment backed by a single `/28` (12 usable IPs) `PRIVATE_SERVICE_CONNECT` NAT subnet. Once consumer endpoints scaled past the NAT subnet's IP/port capacity, new consumer connections failed to establish.\"",
+      "tip": "Size producer `PRIVATE_SERVICE_CONNECT` NAT subnets generously (e.g., `/24` or `/22`) and monitor PSC NAT subnet IP utilization, since you can attach additional PSC NAT subnets without downtime.",
+      "prevent": "Allocate a `/24` or `/22` PSC NAT subnet when publishing a Service Attachment and set alerts on PSC NAT IP utilization.",
+      "detect": "Cloud Monitoring `compute.googleapis.com/subnet/private_service_connect/nat_ip_utilization` and Network Analyzer PSC alerts.",
+      "recover": "Create an additional `PRIVATE_SERVICE_CONNECT` purpose subnet in the producer region and attach it to the live Service Attachment (`--nat-subnets`).",
+      "docLabel": "Configure Private Service Connect Producer NAT Subnets",
+      "docUrl": "https://docs.cloud.google.com/vpc/docs/configure-private-service-connect-producer#nat-subnets",
+      "q": "How can a service producer remediate IP exhaustion on a Private Service Connect (PSC) Service Attachment's NAT subnet without disconnecting existing consumers?",
+      "opts": [
+        "Delete the entire producer VPC and recreate it",
+        "Ask all consumers to switch to public internet connections",
+        "Create an additional subnet with `--purpose=PRIVATE_SERVICE_CONNECT` in the same region and add it to the existing Service Attachment's `--nat-subnets` list without downtime"
+      ],
+      "ans": 2,
+      "why": "Service Attachments support multiple PSC NAT subnets; you can hot-attach additional `PRIVATE_SERVICE_CONNECT` subnets non-disruptively."
+    },
+    {
+      "id": "net-sn-nat-google-egress",
+      "shortTag": "NATforGCS!",
+      "title": "Custom Static Route Forced Petabyte Cloud Storage Reads Through Public Cloud NAT",
+      "quip": "\"A data-processing subnet added a custom route sending `0.0.0.0/0` through a third-party NAT appliance without a specific route for `199.36.153.8/30` (`private.googleapis.com`) to the default internet gateway. Petabytes of BigQuery and Cloud Storage reads hairpinned through external NAT instances instead of free Private Google Access, spiking egress and NAT processing charges.\"",
+      "tip": "Ensure Private Google Access is enabled on every private subnet and route `*.googleapis.com` via `private.googleapis.com` or `restricted.googleapis.com`.",
+      "prevent": "Enable Private Google Access (`--enable-private-ip-google-access`) on all subnets in Terraform and verify with Connectivity Tests.",
+      "detect": "Cloud Monitoring `nat/egress_bytes_count` spikes correlated with Cloud Storage / BigQuery batch jobs.",
+      "recover": "Enable `--enable-private-ip-google-access` on the subnet and ensure DNS resolves `googleapis.com` to `199.36.153.8/30` or `199.36.153.4/30`.",
+      "docLabel": "Cloud NAT Interaction with Private Google Access",
+      "docUrl": "https://docs.cloud.google.com/nat/docs/overview#interaction-pga",
+      "q": "When a private VM (without an external IP) in a subnet with both Cloud NAT and Private Google Access enabled sends traffic to `storage.googleapis.com`, how is that traffic handled?",
+      "opts": [
+        "Traffic to Google APIs uses Private Google Access over Google's internal network directly without consuming Cloud NAT ports or incurring Cloud NAT data processing charges",
+        "Traffic is hairpinned out to the public internet and billed triple by Cloud NAT",
+        "Cloud NAT blocks all traffic to `*.googleapis.com`"
+      ],
+      "ans": 0,
+      "why": "When Private Google Access is active on a subnet, Google Cloud routes traffic to Google APIs internally rather than performing source NAT through Cloud NAT."
+    },
+    {
+      "id": "net-sn-dns-fw-35-199",
+      "shortTag": "DNS 35.199!",
+      "title": "Blocked `35.199.192.0/19` Egress/Ingress Broke Cloud DNS Conditional Forwarding to On-Prem",
+      "quip": "\"The team configured a Cloud DNS Outbound Forwarding Zone for `corp.local` pointing to on-premises DNS servers over HA VPN, but forgot to allow `35.199.192.0/19` on the on-premises firewall and VPN routes. Every lookup for `*.corp.local` from GKE pods timed out with `SERVFAIL` because Cloud DNS forwarding queries originate from Google's `35.199.192.0/19` range.\"",
+      "tip": "Cloud DNS Outbound Forwarding Type 1/default queries originate from `35.199.192.0/19` (unless using private alternative routing); you must advertise `35.199.192.0/19` on Cloud Router and allow it on on-premises firewalls.",
+      "prevent": "Advertise `35.199.192.0/19` via Cloud Router Custom Route Advertisements and permit `35.199.192.0/19` on on-premises DNS firewalls.",
+      "detect": "Network Analyzer `DNS_FORWARDING_TARGET_UNREACHABLE` alert and `SERVFAIL` responses in Cloud DNS query logs.",
+      "recover": "Add `35.199.192.0/19` as a custom advertised route on the Cloud Router BGP session and allow `udp/tcp 53` from `35.199.192.0/19` on the on-premises DNS firewall.",
+      "docLabel": "Cloud DNS Forwarding Zones Requirements",
+      "docUrl": "https://docs.cloud.google.com/dns/docs/zones/forwarding-zones",
+      "q": "Why must you advertise `35.199.192.0/19` over Cloud Router BGP and allow it through your on-premises firewall when using standard Cloud DNS Outbound Forwarding to on-premises DNS servers?",
+      "opts": [
+        "`35.199.192.0/19` is the public IP address of GitHub.com",
+        "Cloud DNS sends outbound forwarded queries from the source IP range `35.199.192.0/19`, so the on-premises network needs a return route and firewall permit rule for that range",
+        "Cloud Router cannot establish BGP peering without `35.199.192.0/19` as its ASN"
+      ],
+      "ans": 1,
+      "why": "Cloud DNS forwarders source queries from `35.199.192.0/19`; without a custom BGP advertisement and firewall allow rule, return DNS replies from on-premises are dropped."
+    },
+    {
+      "id": "net-sn-dns-loop",
+      "shortTag": "DNS Loop!",
+      "title": "Mutual Conditional Forwarding Loop Between Cloud DNS and BIND Caused `SERVFAIL` Storm",
+      "quip": "\"Cloud DNS was configured to forward `internal.example.com` to an on-premises BIND server, while the BIND server forwarded `*.example.com` right back to the Cloud DNS Inbound Forwarding IP. Queries for `nonexistent.internal.example.com` bounced back and forth until TTL/recursion limits expired, saturating both resolvers with `SERVFAIL` errors.\"",
+      "tip": "Never create circular forwarding dependencies between Cloud DNS Outbound Forwarding Zones and on-premises forwarders; delegate distinct subdomains authoritatively.",
+      "prevent": "Design strict split-horizon authority (e.g., `gcp.example.com` authoritative in Cloud DNS Private Zone, `onprem.example.com` authoritative in BIND).",
+      "detect": "Spike in Cloud DNS query volume and `SERVFAIL` response codes in `dns_query` logs.",
+      "recover": "Break the loop by making Cloud DNS authoritative for the GCP subdomain via a standard Private Zone rather than a forwarding zone.",
+      "docLabel": "Avoid DNS Forwarding Loops",
+      "docUrl": "https://docs.cloud.google.com/dns/docs/best-practices#avoid_forwarding_loops",
+      "q": "How do you prevent DNS forwarding loops when integrating Google Cloud DNS with on-premises Active Directory or BIND DNS servers?",
+      "opts": [
+        "Point both DNS servers to forward `*.corp.example.com` to each other",
+        "Set the DNS record TTL to 0 seconds on all A records",
+        "Use distinct authoritative subdomains (e.g., `gcp.corp.example.com` in a Cloud DNS Private Zone and `dc.corp.example.com` on-premises) so neither resolver forwards a zone back to a non-authoritative peer"
+      ],
+      "ans": 2,
+      "why": "Clean namespace delegation ensures each resolver is authoritative for its own domain hierarchy and never re-forwards queries in a circle."
+    },
+    {
+      "id": "net-sn-peering-dns-miss",
+      "shortTag": "NoDNSPeering",
+      "title": "Assumed VPC Network Peering Automatically Shared Cloud DNS Private Zones",
+      "quip": "\"After peering `vpc-consumer` with `vpc-producer`, engineers expected VMs in `vpc-consumer` to automatically resolve `db.internal.prod` hosted in `vpc-producer`'s Cloud DNS Private Zone. All DNS lookups returned `NXDOMAIN` because VPC Network Peering only shares packet routing, NOT Cloud DNS Private Zones.\"",
+      "tip": "VPC Network Peering does not share Cloud DNS Private Zones automatically; authorize the consumer VPC on the Private Zone or create a Cloud DNS Peering Zone.",
+      "prevent": "Add `vpc-consumer` to the Private Zone's authorized visibility networks list (or configure a Cloud DNS Peering Zone for cross-project delegation).",
+      "detect": "Connectivity works by raw IP address (`10.x.x.x`) while hostname lookups fail with `NXDOMAIN`.",
+      "recover": "Update the Cloud DNS Private Zone visibility (`--networks`) to include both VPCs, or create a Cloud DNS Peering Zone targeting the producer VPC.",
+      "docLabel": "Cloud DNS Peering & Private Zone Visibility",
+      "docUrl": "https://docs.cloud.google.com/dns/docs/zones/peering-zones",
+      "q": "Does establishing VPC Network Peering between two VPCs automatically allow VMs in `VPC-A` to resolve records in a Cloud DNS Private Zone attached only to `VPC-B`?",
+      "opts": [
+        "No — VPC Network Peering only exchanges IP routes; you must either add `VPC-A` to the Private Zone's authorized networks list or configure a Cloud DNS Peering Zone",
+        "Yes — all DNS zones are globally shared across peered VPCs automatically",
+        "Yes — but only for `TXT` records"
+      ],
+      "ans": 0,
+      "why": "IP routing (VPC Peering) and name resolution visibility (Cloud DNS) are separate planes; Private Zones must explicitly authorize each VPC or use DNS Peering."
+    },
+    {
+      "id": "net-sn-flowlog-100pct",
+      "shortTag": "FlowLogBill",
+      "title": "Unfiltered 100% 5-Sec VPC Flow Logs on High-Chatter Analytics Subnet Spiked Log Bill",
+      "quip": "\"An admin enabled VPC Flow Logs with `1.0` (100%) sampling, `5-second` intervals, and `INCLUDE_ALL_METADATA` on a 400-node Spark/Bigtable subnet without any filter expression. Generated 18 TB of flow logs per day in Cloud Logging, blowing past the monthly observability budget in 72 hours.\"",
+      "tip": "Tune VPC Flow Log sampling rates (e.g., `0.1`–`0.5`), aggregation intervals (`30 sec` or `1 min` for high-volume subnets), and filter expressions.",
+      "prevent": "Configure sensible sampling rates and log sink exclusion filters, or route high-volume flow logs directly to Cloud Storage / BigQuery for low-cost retention.",
+      "detect": "Cloud Billing budget alerts and Cloud Logging ingestion volume metrics (`logging.googleapis.com/byte_count`).",
+      "recover": "Adjust the subnet's `--flow-sampling` rate (e.g. `0.1`), increase `--aggregation-interval`, and apply a `--filter-expr` to capture only actionable flows.",
+      "docLabel": "Configure VPC Flow Logs Sampling & Filtering",
+      "docUrl": "https://docs.cloud.google.com/vpc/docs/using-flow-logs#sampling",
+      "q": "How can you keep VPC Flow Logs enabled for security and troubleshooting on a high-throughput cluster subnet while controlling Cloud Logging ingestion costs?",
+      "opts": [
+        "Delete the VPC network every night at 11 PM",
+        "Adjust the flow sampling rate (e.g., `0.1` or `0.5`), increase the aggregation interval (e.g., `INTERVAL_1_MIN`), and apply a filter expression to exclude noisy intra-subnet health checks",
+        "Disable all VPC firewall rules so fewer logs are generated"
+      ],
+      "ans": 1,
+      "why": "VPC Flow Logs support configurable sampling rates, aggregation windows, metadata selection, and CEL filter expressions before ingestion."
+    },
+    {
+      "id": "net-sn-shadowed-fw",
+      "shortTag": "ShadowedFW",
+      "title": "Priority-900 Allow Rule Shadowed a Priority-1000 Emergency Block Rule",
+      "quip": "\"During an incident, an operator added a VPC firewall rule at default priority `1000` to block a compromised subnet (`10.40.0.0/24`), unaware of an existing priority `900` allow-all-internal (`10.0.0.0/8`) rule. Because lower numerical priority (`900`) evaluates BEFORE `1000`, the emergency block rule was completely shadowed and had zero effect.\"",
+      "tip": "In Google Cloud Firewall rules, lower numbers mean higher priority (`0` is highest, `65535` is lowest); use Firewall Insights to detect shadowed rules.",
+      "prevent": "Reserve priority bands (`0–500` for emergency blocks, `1000+` for baseline rules) or use Hierarchical Firewall Policies, and enable Firewall Insights.",
+      "detect": "Network Intelligence Center Firewall Insights `SHADOWED_RULE` finding immediately flags the unreachable priority-1000 deny rule.",
+      "recover": "Update the emergency deny rule priority to a lower number (e.g., `100`) so it evaluates before the priority-900 allow rule.",
+      "docLabel": "Firewall Insights Shadowed Rules",
+      "docUrl": "https://docs.cloud.google.com/network-intelligence-center/docs/firewall-insights/concepts/overview",
+      "q": "An administrator creates a DENY firewall rule at priority `1000` for `10.20.0.0/24`, but an existing ALLOW rule for `10.0.0.0/8` exists at priority `900`. What happens to traffic from `10.20.0.0/24`?",
+      "opts": [
+        "Traffic is DENIED because DENY rules always override ALLOW rules regardless of priority number",
+        "Both rules are deleted automatically by Google Cloud",
+        "Traffic is ALLOWED because priority `900` is evaluated before priority `1000` (lower number = higher precedence), making the priority `1000` deny rule completely shadowed"
+      ],
+      "ans": 2,
+      "why": "Within the same policy evaluation level, firewall rules are evaluated strictly in ascending numerical priority order (`0` to `65535`); Firewall Insights flags shadowed rules."
+    },
+    {
+      "id": "net-sn-gke-pod-cidr-full",
+      "shortTag": "PodCIDRFull!",
+      "title": "Ignored Network Analyzer Alert on `/21` GKE Pod CIDR Exhaustion Halted Node Autoscaling",
+      "quip": "\"A VPC-native GKE cluster was created with a `/21` secondary Pod IP range (`2,048` IPs) and default `--max-pods-per-node=110` (consuming a `/24` = 256 IPs per node). When the cluster autoscaler tried to add the 9th node during a traffic spike, node provisioning failed with `IP_SPACE_EXHAUSTED` because 8 nodes × 256 IPs = 2,048 IPs!\"",
+      "tip": "In VPC-native GKE, each node reserves an entire alias IP block (`2 × max-pods-per-node`); monitor Network Analyzer IP utilization and use Multi-Pod CIDR to add secondary ranges.",
+      "prevent": "Right-size `--max-pods-per-node` (e.g., `32` or `64`), allocate sufficiently large secondary ranges, and alert on Network Analyzer GKE IP utilization insights.",
+      "detect": "Network Analyzer `GKE_POD_IP_UTILIZATION_HIGH` insight and GKE `IP_SPACE_EXHAUSTED` cluster autoscaler events.",
+      "recover": "Add a new secondary IP range to the subnet and attach it to the GKE cluster using discontiguous Multi-Pod CIDR (`--additional-pod-ipv4-ranges`) without recreating the cluster.",
+      "docLabel": "GKE Discontiguous Multi-Pod CIDR",
+      "docUrl": "https://docs.cloud.google.com/kubernetes-engine/docs/how-to/multi-pod-cidr",
+      "q": "Why could a VPC-native GKE cluster with a `/21` secondary Pod CIDR (`2,048` IPs) only scale to 8 nodes when configured with the default `max-pods-per-node = 110`?",
+      "opts": [
+        "GKE allocates a `/24` alias IP range (`256` IPs — double the max pods per node rounded to a power of 2) to every node upfront, so 8 nodes × 256 IPs = 2,048 IPs",
+        "GKE nodes can only run in multiples of 8",
+        "Each pod consumes 256 IPv4 addresses simultaneously"
+      ],
+      "ans": 0,
+      "why": "VPC-native GKE reserves a fixed CIDR block per node based on `max-pods-per-node`; you can expand capacity dynamically by adding discontiguous Multi-Pod CIDR ranges."
+    }
+  ],
+  "shields": [
+    {
+      "id": "net-sh-skip-default-net",
+      "shortTag": "NoDefaultVPC",
+      "title": "Org Policy `compute.skipDefaultNetworkCreation`",
+      "quip": "\"Enforced `constraints/compute.skipDefaultNetworkCreation` so new projects never spawn an auto-mode `default` VPC with permissive firewall rules.\"",
+      "tip": "Always disable automatic `default` network creation in new projects via Organization Policy.",
+      "docLabel": "Skip Default Network Creation",
+      "docUrl": "https://docs.cloud.google.com/resource-manager/docs/organization-policy/org-policy-constraints"
+    },
+    {
+      "id": "net-sh-secure-tags",
+      "shortTag": "SecureFWTag",
+      "title": "IAM-Governed Firewall Secure Tags (`tagValues`)",
+      "quip": "\"Bound micro-segmentation firewall rules to IAM-protected Resource Manager Secure Tags instead of mutable text network tags.\"",
+      "tip": "Use IAM-governed Secure Tags in Network and Hierarchical Firewall Policies for cryptographic micro-segmentation.",
+      "docLabel": "IAM-Governed Tags for Firewalls",
+      "docUrl": "https://docs.cloud.google.com/firewall/docs/use-tags-for-firewalls"
+    },
+    {
+      "id": "net-sh-global-routing",
+      "shortTag": "Global BGP",
+      "title": "Global Dynamic Routing Mode (`--bgp-routing-mode=GLOBAL`)",
+      "quip": "\"Configured all production Shared VPCs with `GLOBAL` dynamic routing mode so Cloud Routers propagate hybrid routes across all regions.\"",
+      "tip": "Enable `GLOBAL` dynamic routing mode for multi-region hybrid resilience.",
+      "docLabel": "VPC Dynamic Routing Mode",
+      "docUrl": "https://docs.cloud.google.com/vpc/docs/vpc#routing_for_hybrid_networks"
+    },
+    {
+      "id": "net-sh-bfd-timers",
+      "shortTag": "BFD 300ms",
+      "title": "Bidirectional Forwarding Detection (BFD) on BGP Peers",
+      "quip": "\"Enabled BFD in active mode with 300ms transmit/receive intervals and multiplier 3 on all HA VPN and Interconnect BGP sessions.\"",
+      "tip": "Pair BGP sessions with BFD to avoid waiting 60 seconds for the default BGP hold timer during link failures.",
+      "docLabel": "Configure BFD on Cloud Router",
+      "docUrl": "https://docs.cloud.google.com/network-connectivity/docs/router/how-to/configuring-bfd"
+    },
+    {
+      "id": "net-sh-ha-vpn-backup",
+      "shortTag": "HAVPNBackup",
+      "title": "HA VPN Backup Tunnels Behind Dedicated Interconnect",
+      "quip": "\"Provisioned an encrypted HA VPN gateway over the internet with lower BGP priority (higher MED) as an automated backup to Dedicated Interconnect.\"",
+      "tip": "Use HA VPN with lower BGP route priority as a cost-effective, diverse backup path for Cloud Interconnect.",
+      "docLabel": "Cloud Interconnect & HA VPN Failover",
+      "docUrl": "https://docs.cloud.google.com/network-connectivity/docs/interconnect/concepts/overview"
+    },
+    {
+      "id": "net-sh-ic-sla-check",
+      "shortTag": "DualEAD SLA",
+      "title": "Dual-Metro / Dual-EAD 99.99% Interconnect Topology Verification",
+      "quip": "\"Verified via Cloud Interconnect SLA diagnostics that VLAN attachments are balanced across two Edge Availability Domains and two regions.\"",
+      "tip": "Validate that redundant Interconnect connections sit in distinct Edge Availability Domains (`ead1` vs `ead2`).",
+      "docLabel": "Dedicated Interconnect 99.99% Topology",
+      "docUrl": "https://docs.cloud.google.com/network-connectivity/docs/interconnect/tutorials/dedicated-creating-9999-availability"
+    },
+    {
+      "id": "net-sh-hc-fw-guard",
+      "shortTag": "GFE HlthFW",
+      "title": "Locked Hierarchical Allow Rule for GFE Health Checks (`35.191.0.0/16`, `130.211.0.0/22`)",
+      "quip": "\"Pinned the Google Front End and health-check source CIDR allow rule in a top-level Folder Firewall Policy.\"",
+      "tip": "Protect Load Balancer health-check ranges (`35.191.0.0/16`, `130.211.0.0/22`) in a centrally managed Firewall Policy.",
+      "docLabel": "Health Check Firewall Rules",
+      "docUrl": "https://docs.cloud.google.com/load-balancing/docs/health-checks#fw-rule"
+    },
+    {
+      "id": "net-sh-cdn-origin-hdr",
+      "shortTag": "CDN SafeMode",
+      "title": "Cloud CDN `CACHE_ALL_STATIC` + `Cache-Control: private` Guardrails",
+      "quip": "\"Configured Cloud CDN in `CACHE_ALL_STATIC` mode with strict origin `Cache-Control: private, no-store` headers on authenticated API routes.\"",
+      "tip": "Never use `FORCE_CACHE_ALL` on authenticated backends; use `CACHE_ALL_STATIC` or `USE_ORIGIN_HEADERS`.",
+      "docLabel": "Cloud CDN Cache Modes",
+      "docUrl": "https://docs.cloud.google.com/cdn/docs/cache-modes"
+    },
+    {
+      "id": "net-sh-outlier-det",
+      "shortTag": "OutlierDetct",
+      "title": "Envoy Outlier Detection & Circuit Breaking on Application LB",
+      "quip": "\"Configured `outlierDetection` (consecutive 5xx ejection) and `circuitBreakers` on Application Load Balancer backend services.\"",
+      "tip": "Use Outlier Detection on Application Load Balancers to automatically quarantine misbehaving backend endpoints based on live 5xx responses.",
+      "docLabel": "Traffic Management & Outlier Detection",
+      "docUrl": "https://docs.cloud.google.com/load-balancing/docs/https/traffic-management-overview"
+    },
+    {
+      "id": "net-sh-nat-dyn-port",
+      "shortTag": "NAT DynPorts",
+      "title": "Cloud NAT Dynamic Port Allocation & Multi-IP Auto-Scaling",
+      "quip": "\"Armed Cloud NAT with Dynamic Port Allocation (`maxPortsPerVm=32768`) and automatic NAT IP allocation alerts.\"",
+      "tip": "Enable Dynamic Port Allocation on Cloud NAT to scale ports per VM dynamically during burst workloads.",
+      "docLabel": "Cloud NAT Dynamic Port Allocation",
+      "docUrl": "https://docs.cloud.google.com/nat/docs/ports-and-addresses#dynamic-port"
+    },
+    {
+      "id": "net-sh-pga-enabled",
+      "shortTag": "PGA Default",
+      "title": "Private Google Access Enabled Across All Private Subnets",
+      "quip": "\"Enforced Private Google Access (`privateIpGoogleAccess: true`) on every custom subnet via Terraform policy validation.\"",
+      "tip": "Enable Private Google Access on all private subnets so workloads reach Google APIs without external IPs or NAT charges.",
+      "docLabel": "Private Google Access Overview",
+      "docUrl": "https://docs.cloud.google.com/vpc/docs/private-google-access"
+    },
+    {
+      "id": "net-sh-psc-conn-limit",
+      "shortTag": "PSC Consumer",
+      "title": "PSC Producer Connection Accept Lists & Per-Consumer Limits",
+      "quip": "\"Configured `ACCEPT_MANUAL` project allowlists and per-project connection limits (`connectionLimit`) on Private Service Connect Service Attachments.\"",
+      "tip": "Use PSC Service Attachment project accept lists and `connectionLimit` quotas to isolate multi-tenant consumers.",
+      "docLabel": "Manage PSC Producer Connections",
+      "docUrl": "https://docs.cloud.google.com/vpc/docs/configure-private-service-connect-producer"
+    },
+    {
+      "id": "net-sh-dns-log",
+      "shortTag": "CloudDNSLog",
+      "title": "Cloud DNS Server Policy Query Logging Enabled",
+      "quip": "\"Attached a Cloud DNS Server Policy with `enableLogging: true` across all production VPC networks.\"",
+      "tip": "Enable Cloud DNS logging via a DNS Server Policy to troubleshoot resolution failures and power Event Threat Detection.",
+      "docLabel": "Use Cloud DNS Logging",
+      "docUrl": "https://docs.cloud.google.com/dns/docs/monitoring"
+    },
+    {
+      "id": "net-sh-conn-test-ci",
+      "shortTag": "CITestProbes",
+      "title": "Continuous Connectivity Tests for Critical Payment & DB Paths",
+      "quip": "\"Scheduled automated Network Intelligence Center Connectivity Tests verifying reachability across all tier-1 service paths every 5 minutes.\"",
+      "tip": "Automate Connectivity Tests in CI/CD to validate network reachability before and after infrastructure changes.",
+      "docLabel": "Connectivity Tests Overview",
+      "docUrl": "https://docs.cloud.google.com/network-intelligence-center/docs/connectivity-tests/concepts/overview"
+    },
+    {
+      "id": "net-sh-fw-insights",
+      "shortTag": "FW Insights",
+      "title": "Firewall Insights Shadowed & Zero-Hit Rule Pruning",
+      "quip": "\"Enabled Firewall Insights with automated observation periods to flag shadowed rules and prune unused permissive allow rules.\"",
+      "tip": "Use Firewall Insights to identify shadowed rules and safely tighten overly broad CIDR ranges based on real hit counts.",
+      "docLabel": "Firewall Insights Overview",
+      "docUrl": "https://docs.cloud.google.com/network-intelligence-center/docs/firewall-insights/concepts/overview"
+    },
+    {
+      "id": "net-sh-multipod-cidr",
+      "shortTag": "MultiPodCIDR",
+      "title": "GKE Discontiguous Multi-Pod CIDR Expansion Ready",
+      "quip": "\"Configured GKE subnet monitoring at 70% Pod IP utilization with pre-allocated secondary IP ranges ready for online Multi-Pod CIDR attachment.\"",
+      "tip": "Use GKE discontiguous Multi-Pod CIDR (`--additional-pod-ipv4-ranges`) to expand Pod IP space dynamically.",
+      "docLabel": "GKE Multi-Pod CIDR",
+      "docUrl": "https://docs.cloud.google.com/kubernetes-engine/docs/how-to/multi-pod-cidr"
+    }
+  ]
+}

@@ -710,21 +710,149 @@
     }
   ],
   "shields": [
-    { "id": "db-sh-center", "shortTag": "DB Center", "title": "Google Cloud Database Center", "quip": "\"Unified fleet health, HA posture, backup verification, and security recommendations across every DB in one console.\"", "tip": "Use Database Center to continuously audit HA, PITR backups, encryption, and performance across Cloud SQL, AlloyDB, Spanner, and Bigtable.", "docLabel": "Database Center Overview", "docUrl": "https://cloud.google.com/database-center/docs/overview" },
-    { "id": "db-sh-pitr", "shortTag": "PITR Logs", "title": "Point-in-Time Recovery (PITR)", "quip": "\"Continuous write-ahead log archival armed—ready to clone or rewind to any second within the retention window.\"", "tip": "Enable Point-in-Time Recovery (PITR) on Cloud SQL, AlloyDB, Spanner, and Firestore to recover from accidental deletes.", "docLabel": "Cloud SQL Point-in-Time Recovery", "docUrl": "https://cloud.google.com/sql/docs/postgres/backup-recovery/pitr" },
-    { "id": "db-sh-iam-auth", "shortTag": "IAM DBAuth", "title": "IAM Database Authentication", "quip": "\"Short-lived OAuth2 IAM tokens replaced static database passwords across every microservice.\"", "tip": "Enable IAM database authentication on Cloud SQL and AlloyDB to eliminate password rotation toil.", "docLabel": "Cloud SQL IAM Authentication", "docUrl": "https://cloud.google.com/sql/docs/postgres/iam-authentication" },
-    { "id": "db-sh-key-vis", "shortTag": "KeyVisualz", "title": "Spanner & Bigtable Key Visualizer", "quip": "\"Spotted an asymmetric read/write hotspot on a key prefix before it ever breached our latency SLO!\"", "tip": "Inspect Key Visualizer heatmaps regularly on Spanner, Bigtable, and Firestore to catch hotspotting early.", "docLabel": "Key Visualizer Overview", "docUrl": "https://cloud.google.com/bigtable/docs/key-visualizer" },
-    { "id": "db-sh-qry-ins", "shortTag": "QryInsight", "title": "Query Insights & Index Advisor", "quip": "\"Pinpointed the exact microservice tag and SQL statement causing lock waits in 15 seconds.\"", "tip": "Use Query Insights and Index Advisor on Cloud SQL and AlloyDB to trace slow queries with OpenTelemetry tags.", "docLabel": "Using Query Insights", "docUrl": "https://cloud.google.com/sql/docs/postgres/using-query-insights" },
-    { "id": "db-sh-conn-pool", "shortTag": "Conn Pool", "title": "Managed Connection Pooling / PgBouncer", "quip": "\"Multiplexed 2,000 serverless client connections smoothly over 50 warm PostgreSQL backend processes.\"", "tip": "Use connection pooling to protect relational databases from serverless connection spikes.", "docLabel": "Manage Database Connections", "docUrl": "https://cloud.google.com/sql/docs/postgres/manage-connections" },
-    { "id": "db-sh-span-auto", "shortTag": "SpannrAuto", "title": "Cloud Spanner Managed Autoscaler", "quip": "\"Spanner scaled processing units up ahead of high-priority CPU thresholds and scaled back down overnight.\"", "tip": "Enable Managed Autoscaler on Cloud Spanner to keep high-priority CPU utilization within target bounds automatically.", "docLabel": "Spanner Managed Autoscaler", "docUrl": "https://cloud.google.com/spanner/docs/autoscaling-overview" },
-    { "id": "db-sh-del-prot", "shortTag": "DelProtect", "title": "Database Deletion Protection Flag", "quip": "\"Blocked an accidental `terraform destroy` from wiping the production database instance!\"", "tip": "Enable `--deletion-protection` on all production Cloud SQL, AlloyDB, Spanner, and Bigtable instances.", "docLabel": "Prevent Accidental DB Deletion", "docUrl": "https://cloud.google.com/sql/docs/postgres/deletion-protection" },
-    { "id": "db-sh-psc", "shortTag": "PSC DB End", "title": "Private Service Connect DB Endpoints", "quip": "\"Connected app VPCs privately to AlloyDB and Cloud SQL without VPC peering or overlapping CIDR issues.\"", "tip": "Use Private Service Connect (PSC) endpoints to connect to Cloud SQL and AlloyDB privately across VPCs.", "docLabel": "Connect via Private Service Connect", "docUrl": "https://cloud.google.com/sql/docs/postgres/configure-private-service-connect" },
-    { "id": "db-sh-fs-rules", "shortTag": "Rules Test", "title": "Firestore Security Rules + Emulator Suite", "quip": "\"CI unit tests verified every path, ownership check, and `request.query.limit` constraint before deploy.\"", "tip": "Test Firestore Security Rules against the local Emulator Suite in CI and enforce query limits and schema types.", "docLabel": "Firestore Security Rules", "docUrl": "https://cloud.google.com/firestore/docs/security/get-started" },
-    { "id": "db-sh-bt-route", "shortTag": "BT Routing", "title": "Bigtable Multi-Cluster App Profiles", "quip": "\"Multi-cluster routing automatically failed over live reads and writes when a zone had maintenance.\"", "tip": "Use Multi-Cluster Routing in Bigtable App Profiles for automatic high-availability failover across clusters.", "docLabel": "Bigtable Replication & Routing", "docUrl": "https://cloud.google.com/bigtable/docs/replication-overview" },
-    { "id": "db-sh-redis-ha", "shortTag": "Redis HA", "title": "Memorystore Multi-Zone High Availability", "quip": "\"Cross-zone replica promoted in seconds with zero cache cold-start during zonal maintenance.\"", "tip": "Deploy Memorystore with multi-zone read replicas / cluster HA to keep cache hit rates high during zone events.", "docLabel": "Memorystore High Availability", "docUrl": "https://cloud.google.com/memorystore/docs/redis/high-availability" },
-    { "id": "db-sh-vault", "shortTag": "Vault Lock", "title": "Backup and DR Locked Immutable Vault", "quip": "\"Enforced retention locks on database backups—immutable even if project admin credentials are compromised.\"", "tip": "Store critical database backups in Backup and DR Service with locked minimum retention periods.", "docLabel": "Backup and DR Service", "docUrl": "https://cloud.google.com/backup-disaster-recovery/docs/concepts/backup-dr" },
-    { "id": "db-sh-row-ttl", "shortTag": "Row TTL", "title": "Spanner & Bigtable Row TTL Policies", "quip": "\"Expired session and audit rows purged automatically in the background at low priority—zero manual delete spikes!\"", "tip": "Use built-in Row Time-to-Live (TTL) policies in Spanner, Firestore, and Bigtable to expire stale data automatically.", "docLabel": "Spanner Time to Live (TTL)", "docUrl": "https://cloud.google.com/spanner/docs/ttl" },
-    { "id": "db-sh-no-pub-sql", "shortTag": "NoPubSQL", "title": "Org Policy `sql.restrictAuthorizedNetworks`", "quip": "\"Prevented public IP allowlists on every Cloud SQL instance across the entire organization folder tree.\"", "tip": "Enforce `constraints/sql.restrictAuthorizedNetworks` and `sql.restrictPublicIp` via Organization Policy.", "docLabel": "Cloud SQL Org Policies", "docUrl": "https://cloud.google.com/sql/docs/postgres/org-policy/org-policy" },
-    { "id": "db-sh-autokey", "shortTag": "KMS Autoky", "title": "Cloud KMS Autokey CMEK for Databases", "quip": "\"Automated per-database CMEK key provisioning with separation of duties and scheduled rotation.\"", "tip": "Use Cloud KMS Autokey to provision compliant Customer-Managed Encryption Keys (CMEK) for every database.", "docLabel": "Cloud KMS Autokey Overview", "docUrl": "https://cloud.google.com/kms/docs/autokey-overview" }
+    {
+      "id": "db-sh-center",
+      "shortTag": "DB Center",
+      "title": "Google Cloud Database Center",
+      "quip": "\"Unified fleet health, HA posture, backup verification, and security recommendations across every DB in one console.\"",
+      "tip": "Use Database Center to continuously audit HA, PITR backups, encryption, and performance across Cloud SQL, AlloyDB, Spanner, and Bigtable.",
+      "docLabel": "Database Center Overview",
+      "docUrl": "https://cloud.google.com/database-center/docs/overview"
+    },
+    {
+      "id": "db-sh-pitr",
+      "shortTag": "PITR Logs",
+      "title": "Point-in-Time Recovery (PITR)",
+      "quip": "\"Continuous write-ahead log archival armed—ready to clone or rewind to any second within the retention window.\"",
+      "tip": "Enable Point-in-Time Recovery (PITR) on Cloud SQL, AlloyDB, Spanner, and Firestore to recover from accidental deletes.",
+      "docLabel": "Cloud SQL Point-in-Time Recovery",
+      "docUrl": "https://cloud.google.com/sql/docs/postgres/backup-recovery/pitr"
+    },
+    {
+      "id": "db-sh-iam-auth",
+      "shortTag": "IAM DBAuth",
+      "title": "IAM Database Authentication",
+      "quip": "\"Short-lived OAuth2 IAM tokens replaced static database passwords across every microservice.\"",
+      "tip": "Enable IAM database authentication on Cloud SQL and AlloyDB to eliminate password rotation toil.",
+      "docLabel": "Cloud SQL IAM Authentication",
+      "docUrl": "https://cloud.google.com/sql/docs/postgres/iam-authentication"
+    },
+    {
+      "id": "db-sh-key-vis",
+      "shortTag": "KeyVisualz",
+      "title": "Spanner & Bigtable Key Visualizer",
+      "quip": "\"Spotted an asymmetric read/write hotspot on a key prefix before it ever breached our latency SLO!\"",
+      "tip": "Inspect Key Visualizer heatmaps regularly on Spanner, Bigtable, and Firestore to catch hotspotting early.",
+      "docLabel": "Key Visualizer Overview",
+      "docUrl": "https://cloud.google.com/bigtable/docs/key-visualizer"
+    },
+    {
+      "id": "db-sh-qry-ins",
+      "shortTag": "QryInsight",
+      "title": "Query Insights & Index Advisor",
+      "quip": "\"Pinpointed the exact microservice tag and SQL statement causing lock waits in 15 seconds.\"",
+      "tip": "Use Query Insights and Index Advisor on Cloud SQL and AlloyDB to trace slow queries with OpenTelemetry tags.",
+      "docLabel": "Using Query Insights",
+      "docUrl": "https://cloud.google.com/sql/docs/postgres/using-query-insights"
+    },
+    {
+      "id": "db-sh-conn-pool",
+      "shortTag": "Conn Pool",
+      "title": "Managed Connection Pooling / PgBouncer",
+      "quip": "\"Multiplexed 2,000 serverless client connections smoothly over 50 warm PostgreSQL backend processes.\"",
+      "tip": "Use connection pooling to protect relational databases from serverless connection spikes.",
+      "docLabel": "Manage Database Connections",
+      "docUrl": "https://cloud.google.com/sql/docs/postgres/manage-connections"
+    },
+    {
+      "id": "db-sh-span-auto",
+      "shortTag": "SpannrAuto",
+      "title": "Cloud Spanner Managed Autoscaler",
+      "quip": "\"Spanner scaled processing units up ahead of high-priority CPU thresholds and scaled back down overnight.\"",
+      "tip": "Enable Managed Autoscaler on Cloud Spanner to keep high-priority CPU utilization within target bounds automatically.",
+      "docLabel": "Spanner Managed Autoscaler",
+      "docUrl": "https://cloud.google.com/spanner/docs/autoscaling-overview"
+    },
+    {
+      "id": "db-sh-del-prot",
+      "shortTag": "DelProtect",
+      "title": "Database Deletion Protection Flag",
+      "quip": "\"Blocked an accidental `terraform destroy` from wiping the production database instance!\"",
+      "tip": "Enable `--deletion-protection` on all production Cloud SQL, AlloyDB, Spanner, and Bigtable instances.",
+      "docLabel": "Prevent Accidental DB Deletion",
+      "docUrl": "https://cloud.google.com/sql/docs/postgres/deletion-protection"
+    },
+    {
+      "id": "db-sh-psc",
+      "shortTag": "PSC DB End",
+      "title": "Private Service Connect DB Endpoints",
+      "quip": "\"Connected app VPCs privately to AlloyDB and Cloud SQL without VPC peering or overlapping CIDR issues.\"",
+      "tip": "Use Private Service Connect (PSC) endpoints to connect to Cloud SQL and AlloyDB privately across VPCs.",
+      "docLabel": "Connect via Private Service Connect",
+      "docUrl": "https://cloud.google.com/sql/docs/postgres/configure-private-service-connect"
+    },
+    {
+      "id": "db-sh-fs-rules",
+      "shortTag": "Rules Test",
+      "title": "Firestore Security Rules + Emulator Suite",
+      "quip": "\"CI unit tests verified every path, ownership check, and `request.query.limit` constraint before deploy.\"",
+      "tip": "Test Firestore Security Rules against the local Emulator Suite in CI and enforce query limits and schema types.",
+      "docLabel": "Firestore Security Rules",
+      "docUrl": "https://cloud.google.com/firestore/docs/security/get-started"
+    },
+    {
+      "id": "db-sh-bt-route",
+      "shortTag": "BT Routing",
+      "title": "Bigtable Multi-Cluster App Profiles",
+      "quip": "\"Multi-cluster routing automatically failed over live reads and writes when a zone had maintenance.\"",
+      "tip": "Use Multi-Cluster Routing in Bigtable App Profiles for automatic high-availability failover across clusters.",
+      "docLabel": "Bigtable Replication & Routing",
+      "docUrl": "https://cloud.google.com/bigtable/docs/replication-overview"
+    },
+    {
+      "id": "db-sh-redis-ha",
+      "shortTag": "Redis HA",
+      "title": "Memorystore Multi-Zone High Availability",
+      "quip": "\"Cross-zone replica promoted in seconds with zero cache cold-start during zonal maintenance.\"",
+      "tip": "Deploy Memorystore with multi-zone read replicas / cluster HA to keep cache hit rates high during zone events.",
+      "docLabel": "Memorystore High Availability",
+      "docUrl": "https://cloud.google.com/memorystore/docs/redis/high-availability"
+    },
+    {
+      "id": "db-sh-vault",
+      "shortTag": "Vault Lock",
+      "title": "Backup and DR Locked Immutable Vault",
+      "quip": "\"Enforced retention locks on database backups—immutable even if project admin credentials are compromised.\"",
+      "tip": "Store critical database backups in Backup and DR Service with locked minimum retention periods.",
+      "docLabel": "Backup and DR Service",
+      "docUrl": "https://cloud.google.com/backup-disaster-recovery/docs/concepts/backup-dr"
+    },
+    {
+      "id": "db-sh-row-ttl",
+      "shortTag": "Row TTL",
+      "title": "Spanner & Bigtable Row TTL Policies",
+      "quip": "\"Expired session and audit rows purged automatically in the background at low priority—zero manual delete spikes!\"",
+      "tip": "Use built-in Row Time-to-Live (TTL) policies in Spanner, Firestore, and Bigtable to expire stale data automatically.",
+      "docLabel": "Spanner Time to Live (TTL)",
+      "docUrl": "https://cloud.google.com/spanner/docs/ttl"
+    },
+    {
+      "id": "db-sh-no-pub-sql",
+      "shortTag": "NoPubSQL",
+      "title": "Org Policy `sql.restrictAuthorizedNetworks`",
+      "quip": "\"Prevented public IP allowlists on every Cloud SQL instance across the entire organization folder tree.\"",
+      "tip": "Enforce `constraints/sql.restrictAuthorizedNetworks` and `sql.restrictPublicIp` via Organization Policy.",
+      "docLabel": "Cloud SQL Org Policies",
+      "docUrl": "https://cloud.google.com/sql/docs/postgres/org-policy/org-policy"
+    },
+    {
+      "id": "db-sh-autokey",
+      "shortTag": "KMS Autoky",
+      "title": "Cloud KMS Autokey CMEK for Databases",
+      "quip": "\"Automated per-database CMEK key provisioning with separation of duties and scheduled rotation.\"",
+      "tip": "Use Cloud KMS Autokey to provision compliant Customer-Managed Encryption Keys (CMEK) for every database.",
+      "docLabel": "Cloud KMS Autokey Overview",
+      "docUrl": "https://cloud.google.com/kms/docs/autokey-overview"
+    }
   ]
 }

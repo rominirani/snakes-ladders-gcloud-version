@@ -1,0 +1,973 @@
+{
+  "meta": {
+    "id": "cloud-data-analytics",
+    "title": "Snakes & Ladders",
+    "editionBadge": "Data & Analytics Edition",
+    "edition": "Data & Analytics Edition",
+    "subtitle": "Scale from raw CSVs to a governed petabyte BigQuery lakehouse — master streaming, Dataflow, BigLake & FinOps.",
+    "version": "1.0.0",
+    "author": "Google Cloud Architecture",
+    "defaultDocHost": "docs.cloud.google.com",
+    "allowedDocHosts": [
+      "docs.cloud.google.com",
+      "cloud.google.com"
+    ],
+    "categories": [
+      "BigQuery Performance",
+      "Streaming & Pub/Sub",
+      "Dataflow & Beam",
+      "BigLake & Iceberg",
+      "Dataform & Composer",
+      "Dataplex Governance"
+    ],
+    "tiers": [
+      "GOVERNED LAKEHOUSE",
+      "DATAFORM & COMPOSER",
+      "DATAFLOW & STREAMING",
+      "BIGLAKE & ICEBERG",
+      "RAW INGEST & SQL"
+    ],
+    "milestones": {
+      "1": {
+        "shortTag": "Start",
+        "badge": "RAW CSV SANDBOX",
+        "jump": "Square 1",
+        "title": "Ad-Hoc CSV Uploads & Unpartitioned Sandbox",
+        "quip": "\"One raw CSV file in a bucket, zero partition filters, and a bold vision for a real-time petabyte lakehouse.\"",
+        "tip": "Design your data platform early around partitioned & clustered BigQuery tables, schema-validated Pub/Sub streams, and Dataplex governance.",
+        "docLabel": "BigQuery Architecture Overview",
+        "docUrl": "https://docs.cloud.google.com/bigquery/docs/introduction"
+      },
+      "100": {
+        "shortTag": "Go-Live",
+        "badge": "LAKEHOUSE NIRVANA",
+        "jump": "Square 100 · Real-Time SLA",
+        "title": "Autonomous Petabyte Lakehouse in Production!",
+        "quip": "\"Sub-second BI Engine dashboards, exactly-once streaming pipelines, governed BigLake Iceberg tables, and predictable FinOps slot autoscaling!\"",
+        "tip": "World-class data platforms unite streaming ingestion (Pub/Sub + Dataflow + Storage Write API), open BigLake formats, Dataform assertions, and Dataplex column security.",
+        "docLabel": "Dataplex Universal Catalog Overview",
+        "docUrl": "https://docs.cloud.google.com/dataplex/docs/introduction"
+      }
+    }
+  },
+  "ladders": [
+    {
+      "id": "da-up-part-clust",
+      "shortTag": "Part+Cluster",
+      "category": "BigQuery Performance",
+      "service": "BigQuery",
+      "title": "Time-Unit Partitioning + Multi-Column Clustering",
+      "quip": "\"Pruned 99.4% of a 120 TB telemetry table—queries dropped from 45 seconds to 400ms and cut scanned bytes by 150x!\"",
+      "tip": "Partition large BigQuery tables by date/timestamp (or integer range) and cluster on up to 4 high-cardinality filter/join columns.",
+      "docLabel": "BigQuery Partitioned & Clustered Tables",
+      "docUrl": "https://docs.cloud.google.com/bigquery/docs/partitioned-tables",
+      "q": "When designing a 100 TB BigQuery events table filtered by `event_date`, `tenant_id`, and `event_type`, which layout minimizes bytes scanned?",
+      "opts": [
+        "Partition by `DATE(event_timestamp)` and cluster by `tenant_id, event_type` in order of filter selectivity",
+        "Create a separate physical BigQuery table for every tenant and every hour of the year",
+        "Store all columns inside a single unindexed JSON string column with no partitioning"
+      ],
+      "ans": 0,
+      "why": "Partitioning eliminates irrelevant date segments before execution, while clustering sorts storage blocks by `tenant_id` and `event_type` for block-level pruning."
+    },
+    {
+      "id": "da-up-mat-views",
+      "shortTag": "Mat Views",
+      "category": "BigQuery Performance",
+      "service": "BigQuery",
+      "title": "Smart-Tuned Incremental Materialized Views",
+      "quip": "\"Queries hitting the raw fact table were automatically rewritten by the optimizer to use our pre-aggregated Materialized View!\"",
+      "tip": "BigQuery Materialized Views incrementally refresh on base-table changes and support automatic query rewrite via Smart Tuning.",
+      "docLabel": "Introduction to Materialized Views",
+      "docUrl": "https://docs.cloud.google.com/bigquery/docs/materialized-views-intro",
+      "q": "How does BigQuery Smart Tuning accelerate queries when a Materialized View exists on a base fact table?",
+      "opts": [
+        "Developers must manually export the view to CSV and reload it every 5 minutes",
+        "The query optimizer automatically rewrites eligible queries against the base table to read from the pre-computed Materialized View",
+        "It disables ACID consistency and drops recent rows older than 1 hour"
+      ],
+      "ans": 1,
+      "why": "Smart Tuning transparently routes aggregation queries to the Materialized View even when SQL still references the underlying base table, combining fresh base deltas with cached aggregates."
+    },
+    {
+      "id": "da-up-bi-engine",
+      "shortTag": "BI Engine",
+      "category": "BigQuery Performance",
+      "service": "BigQuery BI Engine",
+      "title": "BigQuery BI Engine Vectorized In-Memory Acceleration",
+      "quip": "\"Executive Looker and Looker Studio dashboards dropped from 7-second scans to sub-second interactive drill-downs.\"",
+      "tip": "Reserve BI Engine capacity to cache hot BigQuery columns in a vectorized in-memory engine with zero SQL rewrites.",
+      "docLabel": "BigQuery BI Engine Overview",
+      "docUrl": "https://docs.cloud.google.com/bigquery/docs/bi-engine-intro",
+      "q": "What happens when an underlying BigQuery partitioned table receives streaming updates while accelerated by BI Engine?",
+      "opts": [
+        "Dashboards serve stale data for 24 hours until a manual server reboot",
+        "BI Engine blocks all writes to the BigQuery table while active",
+        "BI Engine automatically invalidates only the affected cached partitions/blocks and merges fresh data transparently"
+      ],
+      "ans": 2,
+      "why": "BI Engine is tightly integrated with BigQuery metadata and storage, keeping cached blocks coherent with incoming writes automatically."
+    },
+    {
+      "id": "da-up-slot-autoscale",
+      "shortTag": "AutoscaleSlt",
+      "category": "BigQuery Performance",
+      "service": "BigQuery Editions",
+      "title": "BigQuery Enterprise Edition Autoscaling Reservations",
+      "quip": "\"Baseline slots handled steady workloads while autoscaling burst smoothly to absorb the 9 AM Monday reporting rush.\"",
+      "tip": "Configure BigQuery Editions reservations with a baseline slot count, max reservation size, and separate BACKGROUND/QUERY assignments.",
+      "docLabel": "BigQuery Reservations & Autoscaling",
+      "docUrl": "https://docs.cloud.google.com/bigquery/docs/slots-autoscaling-intro",
+      "q": "In BigQuery Editions, how do baseline slots and autoscaling slots interact inside a reservation?",
+      "opts": [
+        "Baseline slots remain continuously allocated at a lower committed rate while autoscaling dynamically adds/removes slots in 50-slot increments up to `max_slots`",
+        "Autoscaling replaces baseline slots by restarting every running query whenever demand increases",
+        "Baseline slots can only execute `SELECT 1` health checks"
+      ],
+      "ans": 0,
+      "why": "Combining a right-sized baseline with bounded autoscaling gives predictable cost for steady load and elastic capacity for spikes."
+    },
+    {
+      "id": "da-up-search-idx",
+      "shortTag": "SearchIndex",
+      "category": "BigQuery Performance",
+      "service": "BigQuery",
+      "title": "BigQuery Search Index for Sub-Second Log Lookups",
+      "quip": "\"Finding a single `trace_id` or IP address across 80 TB of VPC & app logs went from a full partition scan to a 300ms indexed lookup!\"",
+      "tip": "Create a `SEARCH INDEX` on `STRING` or `JSON` columns in BigQuery to accelerate `SEARCH()` and equality predicates on unstructured logs.",
+      "docLabel": "BigQuery Search Indexes",
+      "docUrl": "https://docs.cloud.google.com/bigquery/docs/search-index",
+      "q": "Which BigQuery feature is purpose-built for fast point lookups of tokens (such as `request_id`, email, or IP) inside multi-terabyte `STRING` or `JSON` log columns?",
+      "opts": [
+        "Partitioning the table by the 36-character UUID `request_id` column",
+        "A BigQuery `SEARCH INDEX` paired with the `SEARCH()` function or equality predicates",
+        "Running `REGEXP_CONTAINS` without any partitioning or indexing"
+      ],
+      "ans": 1,
+      "why": "BigQuery allows at most 10,000 partitions so high-cardinality UUIDs cannot be partition keys; a Search Index maintains an inverted token index over storage blocks."
+    },
+    {
+      "id": "da-up-storage-write",
+      "shortTag": "Write API",
+      "category": "Streaming & Pub/Sub",
+      "service": "BigQuery Storage Write API",
+      "title": "BigQuery Storage Write API with Committed Streams",
+      "quip": "\"Switched from legacy `tabledata.insertAll` to the gRPC Storage Write API—halved streaming ingestion cost and gained exactly-once offset commits!\"",
+      "tip": "Use the BigQuery Storage Write API with Protocol Buffers for high-throughput, exactly-once streaming or batch atomic commits.",
+      "docLabel": "BigQuery Storage Write API",
+      "docUrl": "https://docs.cloud.google.com/bigquery/docs/write-api",
+      "q": "How does the BigQuery Storage Write API differ between `Committed` mode and `Pending` mode?",
+      "opts": [
+        "`Committed` mode deletes existing table rows, whereas `Pending` mode only writes to local disk",
+        "Both modes use HTTP/1.0 XML polling and cannot enforce schema types",
+        "`Committed` mode makes records immediately readable as append offsets are acknowledged, whereas `Pending` mode buffers writes in a stream until `BatchCommitWriteStreams` atomically commits them all"
+      ],
+      "ans": 2,
+      "why": "Choose `Committed` streams for lowest end-to-end streaming latency with record-offset deduplication, or `Pending` streams for transactional all-or-nothing batch loads."
+    },
+    {
+      "id": "da-up-pubsub-eo",
+      "shortTag": "ExactlyOnce",
+      "category": "Streaming & Pub/Sub",
+      "service": "Pub/Sub",
+      "title": "Pub/Sub Subscription Exactly-Once Delivery",
+      "quip": "\"Eliminated duplicate payment ledger events during subscriber restarts without maintaining a custom Redis deduplication table.\"",
+      "tip": "Enable `enable_exactly_once_delivery` on Pub/Sub pull/StreamingPull subscriptions so only the current lease-holding consumer can ACK a message.",
+      "docLabel": "Pub/Sub Exactly-Once Delivery",
+      "docUrl": "https://docs.cloud.google.com/pubsub/docs/exactly-once-delivery",
+      "q": "How does Pub/Sub's native Exactly-Once Delivery prevent duplicate processing when an acknowledgment (`ACK`) arrives late after lease expiration?",
+      "opts": [
+        "Pub/Sub tracks a unique receipt token per delivery attempt and rejects ACKs from expired leases with a `FAILED_PRECONDITION` error so the application can roll back",
+        "Pub/Sub pauses the entire topic for 10 minutes after every single message",
+        "Pub/Sub deletes all unacknowledged messages after 1 second"
+      ],
+      "ans": 0,
+      "why": "Tracking per-delivery receipt IDs ensures only the active lease holder can finalize an ACK, giving deterministic deduplication within the region."
+    },
+    {
+      "id": "da-up-pubsub-bq",
+      "shortTag": "PubSub->BQ",
+      "category": "Streaming & Pub/Sub",
+      "service": "Pub/Sub",
+      "title": "Direct Pub/Sub BigQuery Subscription (Zero-Code Ingest)",
+      "quip": "\"Retired an entire pass-through ingestion fleet—Pub/Sub writes validated Avro/Protobuf events straight into BigQuery with a dead-letter topic!\"",
+      "tip": "Use a Pub/Sub BigQuery Subscription when events require no complex stateful transformation before landing in BigQuery.",
+      "docLabel": "Pub/Sub BigQuery Subscriptions",
+      "docUrl": "https://docs.cloud.google.com/pubsub/docs/bigquery",
+      "q": "When is a native Pub/Sub BigQuery Subscription preferable to a custom Dataflow streaming pipeline?",
+      "opts": [
+        "When you must join 5 streaming sources over a 30-minute sliding session window with external RPC enrichment",
+        "When incoming messages can be written directly to a BigQuery table (using topic schema mapping or raw payload + metadata) without stateful windowing or multi-stream joins",
+        "When writing records to an on-premises magnetic tape drive"
+      ],
+      "ans": 1,
+      "why": "Direct BigQuery Subscriptions eliminate worker compute overhead for simple append-only ingestion while supporting schema alignment and dead-letter topics."
+    },
+    {
+      "id": "da-up-stream-engine",
+      "shortTag": "StreamEngin",
+      "category": "Dataflow & Beam",
+      "service": "Dataflow",
+      "title": "Dataflow Streaming Engine + Runner v2",
+      "quip": "\"Offloaded shuffle and windmill state storage from worker persistent disks to the managed Dataflow Streaming Engine backend—autoscaling zoomed 4x faster!\"",
+      "tip": "Enable Dataflow Streaming Engine so windowing state and shuffle live in Google's managed service layer rather than worker VM disks.",
+      "docLabel": "Dataflow Streaming Engine",
+      "docUrl": "https://docs.cloud.google.com/dataflow/docs/guides/deploying-a-pipeline#streaming-engine",
+      "q": "What is the primary architectural benefit of enabling Dataflow Streaming Engine on an Apache Beam streaming pipeline?",
+      "opts": [
+        "Forces the entire pipeline to run on a single non-autoscaling worker VM",
+        "Converts streaming pipelines into weekly cron jobs",
+        "Moves shuffle and state storage off worker VMs into a managed backend, reducing worker CPU/disk footprint and making horizontal autoscaling much faster and smoother"
+      ],
+      "ans": 2,
+      "why": "Decoupling state from worker VMs eliminates stateful disk rebalancing bottlenecks during scale-up and scale-down events."
+    },
+    {
+      "id": "da-up-df-prime",
+      "shortTag": "DataflwPrme",
+      "category": "Dataflow & Beam",
+      "service": "Dataflow Prime",
+      "title": "Dataflow Prime Right-Fitting & Vertical Autoscaling",
+      "quip": "\"An OOM-prone ML enrichment DoFn automatically received extra memory via Right-Fitting without over-provisioning the rest of the pipeline.\"",
+      "tip": "Use Dataflow Prime for vertical memory autoscaling, stage-specific Resource Hints (`min_ram`, accelerator hints), and Straggler Diagnostics.",
+      "docLabel": "Dataflow Prime Overview",
+      "docUrl": "https://docs.cloud.google.com/dataflow/docs/guides/enable-dataflow-prime",
+      "q": "How does Dataflow Prime's Right-Fitting capability optimize heterogeneous Apache Beam pipelines?",
+      "opts": [
+        "Applies stage-specific compute shapes (via resource hints or vertical memory autoscaling) so memory-intensive transforms get extra RAM without inflating every stage",
+        "Forces all transforms to share a single 512 MB RAM allocation",
+        "Deletes pipeline stages that exceed 50% CPU utilization"
+      ],
+      "ans": 0,
+      "why": "Right-fitting tailors compute resources per fused stage rather than forcing a single oversized machine type across the entire job."
+    },
+    {
+      "id": "da-up-flex-tmpl",
+      "shortTag": "FlexTemplat",
+      "category": "Dataflow & Beam",
+      "service": "Dataflow Flex Templates",
+      "title": "Dataflow Flex Templates Packaged in Artifact Registry",
+      "quip": "\"Standardized all production Beam jobs into immutable container Flex Templates launched reproducibly via CI/CD and Cloud Composer.\"",
+      "tip": "Package Apache Beam dependencies and launch logic as Docker-based Dataflow Flex Templates stored in Artifact Registry.",
+      "docLabel": "Dataflow Flex Templates",
+      "docUrl": "https://docs.cloud.google.com/dataflow/docs/guides/templates/using-flex-templates",
+      "q": "What advantage do Dataflow Flex Templates offer over Classic Templates?",
+      "opts": [
+        "Classic Templates support custom Docker containers whereas Flex Templates only run static SQL files",
+        "Flex Templates package the pipeline starter and custom dependencies in a Docker container image, generating the execution graph dynamically at launch time based on runtime parameters",
+        "Flex Templates bypass all IAM permissions in the target project"
+      ],
+      "ans": 1,
+      "why": "Because the Beam graph is constructed inside the launcher container at job submission time, Flex Templates can branch graph topology dynamically from runtime flags."
+    },
+    {
+      "id": "da-up-biglake-ice",
+      "shortTag": "BigLake Ice",
+      "category": "BigLake & Iceberg",
+      "service": "BigLake",
+      "title": "BigLake Managed Tables for Apache Iceberg",
+      "quip": "\"Spark on Dataproc and BigQuery SQL queried the exact same open Apache Iceberg tables in Cloud Storage with unified column-level security!\"",
+      "tip": "Use BigLake tables for Apache Iceberg to combine open Parquet/Iceberg storage in GCS with BigQuery's fine-grained governance and performance.",
+      "docLabel": "BigLake Tables for Apache Iceberg",
+      "docUrl": "https://docs.cloud.google.com/bigquery/docs/iceberg-tables",
+      "q": "How does BigLake allow analysts to query Apache Iceberg tables in Cloud Storage with row- and column-level security without granting them raw GCS bucket access?",
+      "opts": [
+        "Every analyst must be granted `roles/storage.admin` on the underlying Cloud Storage bucket",
+        "BigLake copies all Parquet files into browser `localStorage` before filtering",
+        "Queries authenticate through a delegated BigLake Cloud Resource Connection service account while BigQuery enforces table-level, row-level, and policy-tag security"
+      ],
+      "ans": 2,
+      "why": "Delegated connections decouple physical object storage permissions from fine-grained analytical access controls."
+    },
+    {
+      "id": "da-up-metadata-cache",
+      "shortTag": "Meta Cache",
+      "category": "BigLake & Iceberg",
+      "service": "BigLake",
+      "title": "BigLake Object Metadata Caching + Partition Pruning",
+      "quip": "\"Eliminated millions of slow `storage.objects.list` calls on our 50-million-file Hive-partitioned GCS lake—query planning dropped from 40s to 1s!\"",
+      "tip": "Enable BigLake metadata caching (`max_staleness`) so BigQuery prunes Hive partitions and column stats without listing GCS objects on every query.",
+      "docLabel": "BigLake Metadata Caching",
+      "docUrl": "https://docs.cloud.google.com/bigquery/docs/metadata-caching",
+      "q": "Why enable automatic Metadata Caching on a BigLake table backed by millions of Parquet files in Cloud Storage?",
+      "opts": [
+        "Caches file names, Hive partition keys, and Parquet row-group statistics in BigQuery metadata so queries avoid slow GCS directory listing operations",
+        "Compresses all Parquet files into a single ZIP archive",
+        "Deletes files from Cloud Storage after they are read once"
+      ],
+      "ans": 0,
+      "why": "Metadata caching enables fast file pruning and BI Engine acceleration over external Cloud Storage lakes."
+    },
+    {
+      "id": "da-up-dataform-inc",
+      "shortTag": "DataformInc",
+      "category": "Dataform & Composer",
+      "service": "Dataform",
+      "title": "Dataform Incremental SQLX Models with Partition Pruning",
+      "quip": "\"Converted a full-refresh 20 TB daily rebuild into an incremental SQLX `MERGE` model scanning only the last 2 days of partitions!\"",
+      "tip": "Use `type: 'incremental'` with `uniqueKey` and `updatePartitionFilter` in Dataform SQLX to process only new partitions on each run.",
+      "docLabel": "Configure Incremental Tables in Dataform",
+      "docUrl": "https://docs.cloud.google.com/dataform/docs/incremental-tables",
+      "q": "In a Dataform incremental table (`type: 'incremental'`) backed by a partitioned BigQuery target, why should you configure `updatePartitionFilter` alongside `uniqueKey`?",
+      "opts": [
+        "It forces Dataform to drop and recreate the entire table on every execution",
+        "It adds a partition filter predicate to the `MERGE` target scan so BigQuery only reads recent target partitions instead of scanning the entire historical table",
+        "It disables primary key uniqueness checks"
+      ],
+      "ans": 1,
+      "why": "Without `updatePartitionFilter`, a `MERGE` on `uniqueKey` scans the entire target table to match keys; bounding the partition window keeps incremental merges cheap regardless of table age."
+    },
+    {
+      "id": "da-up-composer-def",
+      "shortTag": "Deferrable",
+      "category": "Dataform & Composer",
+      "service": "Cloud Composer",
+      "title": "Cloud Composer 3 with Deferrable Airflow Operators",
+      "quip": "\"Switched long-running BigQuery and Dataflow operators to `deferrable=True`—freed 85% of Airflow worker slots to the async Triggerer!\"",
+      "tip": "Use Deferrable Operators (`deferrable=True`) in Cloud Composer so waiting tasks release worker slots and resume via the lightweight Triggerer.",
+      "docLabel": "Cloud Composer Deferrable Operators",
+      "docUrl": "https://docs.cloud.google.com/composer/docs/composer-2/use-deferrable-operators",
+      "q": "How do Deferrable Operators in Cloud Composer prevent Airflow worker slot starvation when orchestrating external BigQuery or Dataproc jobs?",
+      "opts": [
+        "They run the entire Spark cluster inside the Airflow web server process",
+        "They skip waiting for jobs and mark all tasks as succeeded immediately",
+        "While waiting for the external job to finish, the operator suspends itself and hands polling off to the async asyncio Triggerer process, freeing the worker slot"
+      ],
+      "ans": 2,
+      "why": "A single async Triggerer can monitor hundreds of deferred external jobs using minimal memory while workers stay free for active task execution."
+    },
+    {
+      "id": "da-up-dataplex-dq",
+      "shortTag": "AutoDQ Scan",
+      "category": "Dataplex Governance",
+      "service": "Dataplex",
+      "title": "Dataplex Auto Data Quality Rules & Dead-Record Quarantine",
+      "quip": "\"Automated null, uniqueness, and SQL assertion checks across gold tables—routing failed rows directly to a quarantine table with Cloud Logging alerts!\"",
+      "tip": "Use Dataplex Auto Data Quality scans to validate tables declaratively and publish quality scores directly to Dataplex Universal Catalog.",
+      "docLabel": "Dataplex Auto Data Quality",
+      "docUrl": "https://docs.cloud.google.com/dataplex/docs/auto-data-quality-overview",
+      "q": "What can a Dataplex Auto Data Quality job do automatically when rows violate defined quality rules?",
+      "opts": [
+        "Export failing records and rule diagnostics to a designated BigQuery dead-letter/quarantine table and emit metrics/logs to Cloud Monitoring",
+        "Automatically rewrite application source code in GitHub",
+        "Shut down the Google Cloud organization"
+      ],
+      "ans": 0,
+      "why": "Persisting failed records to a BigQuery results/quarantine table makes root-cause analysis and pipeline circuit-breaking straightforward."
+    },
+    {
+      "id": "da-up-policy-tags",
+      "shortTag": "Policy Tags",
+      "category": "Dataplex Governance",
+      "service": "BigQuery & Dataplex",
+      "title": "Column-Level Security & Dynamic Data Masking",
+      "quip": "\"Analysts run `SELECT *` on the customer table without `PERMISSION_DENIED`—PII columns automatically return SHA-256 hashes or `NULL` based on IAM role!\"",
+      "tip": "Attach Dataplex taxonomy Policy Tags with Dynamic Data Masking rules so unauthorized users receive masked values instead of failed queries.",
+      "docLabel": "BigQuery Dynamic Data Masking",
+      "docUrl": "https://docs.cloud.google.com/bigquery/docs/column-data-masking-intro",
+      "q": "What is the operational advantage of adding a Dynamic Data Masking rule (`Masked Reader`) on a policy-tagged column compared to strict column ACL blocking alone?",
+      "opts": [
+        "It deletes the sensitive column permanently from storage",
+        "Queries selecting multiple columns (or `SELECT *`) succeed with sensitive values masked (e.g., SHA-256, null, or last-4), rather than failing the entire query",
+        "It exposes plaintext PII to all public users"
+      ],
+      "ans": 1,
+      "why": "Dynamic Data Masking lets shared BI views and queries work seamlessly across audiences while enforcing role-based obfuscation at query time."
+    },
+    {
+      "id": "da-up-lineage",
+      "shortTag": "DataLineage",
+      "category": "Dataplex Governance",
+      "service": "Dataplex Universal Catalog",
+      "title": "Automated End-to-End Dataplex Data Lineage",
+      "quip": "\"Traced a suspicious revenue metric upstream through 6 Dataform views, a Dataflow job, and a BigQuery load in 10 seconds!\"",
+      "tip": "Enable the Data Lineage API in Dataplex Universal Catalog to automatically capture table and column lineage across BigQuery, Dataform, Composer, and Dataflow.",
+      "docLabel": "Dataplex Data Lineage",
+      "docUrl": "https://docs.cloud.google.com/dataplex/docs/data-lineage-about",
+      "q": "How is lineage populated in Dataplex Universal Catalog when transformations run in BigQuery, Dataflow, or Cloud Composer?",
+      "opts": [
+        "Engineers must manually draw PNG diagrams and upload them after every query",
+        "Lineage only works on tables with fewer than 10 rows",
+        "The Data Lineage API automatically captures lineage events from supported Google Cloud services and also accepts custom OpenLineage events"
+      ],
+      "ans": 2,
+      "why": "Automated lineage capture plus OpenLineage integration gives impact analysis before schema changes and speeds up data incident debugging."
+    }
+  ],
+  "snakes": [
+    {
+      "id": "da-sn-select-star",
+      "shortTag": "50TB Scan!",
+      "category": "BigQuery Performance",
+      "service": "BigQuery",
+      "title": "Unpartitioned `SELECT * ... LIMIT 10` Scanned 50 TB per Dashboard Refresh",
+      "quip": "\"A developer added `LIMIT 10` thinking it made `SELECT *` cheap on an unpartitioned 50 TB table—Looker refreshed it 200 times and burned 10 PB of on-demand quota!\"",
+      "tip": "In columnar storage without a partition filter, `LIMIT` does NOT stop full column scans when sorting/filtering; enforce `require_partition_filter = true` and `maximum_bytes_billed`.",
+      "prevent": "Set `require_partition_filter = true` on large tables, project only needed columns, and set `maximum_bytes_billed` per query.",
+      "detect": "Query `region-us.INFORMATION_SCHEMA.JOBS_BY_PROJECT` for top `total_bytes_billed` queries and set Cloud Billing anomaly alerts.",
+      "recover": "Cancel runaway jobs, enable `require_partition_filter = true`, refactor queries to select explicit columns with partition predicates, and switch to slot reservations.",
+      "docLabel": "BigQuery Cost Controls & Best Practices",
+      "docUrl": "https://docs.cloud.google.com/bigquery/docs/best-practices-costs",
+      "q": "Why does adding `LIMIT 10` to `SELECT * FROM huge_table WHERE unindexed_col = 'x'` fail to reduce on-demand bytes billed in BigQuery?",
+      "opts": [
+        "`LIMIT 10` forces BigQuery to scan the table 10 times",
+        "BigQuery bills for all bytes read from the referenced columns across scanned partitions; `LIMIT` only caps returned output rows, not column scanning",
+        "`SELECT *` only reads column names from metadata"
+      ],
+      "ans": 1,
+      "why": "To bound cost, prune partitions with a `WHERE` filter on the partition column, select only required columns, and set `maximum_bytes_billed`."
+    },
+    {
+      "id": "da-sn-uuid-part",
+      "shortTag": "10kPartLimt",
+      "category": "BigQuery Performance",
+      "service": "BigQuery",
+      "title": "Tried to Partition a BigQuery Table by High-Cardinality `user_id`",
+      "quip": "\"Attempted integer-range partitioning with 1 million buckets for `user_id`—immediately hit BigQuery's 10,000 partition limit and broke ingestion!\"",
+      "tip": "BigQuery supports up to 10,000 partitions per table; use time-unit partitioning and put high-cardinality keys (`user_id`) in `CLUSTER BY`.",
+      "prevent": "Use `PARTITION BY DATE(ts)` and `CLUSTER BY user_id` (plus a `SEARCH INDEX` if needed) instead of partitioning by high-cardinality IDs.",
+      "detect": "BigQuery DDL/load job error `Exceeded rate limits: too many table partitions` and `INFORMATION_SCHEMA.PARTITIONS` counts approaching 10,000.",
+      "recover": "Recreate the table partitioned by date/month and clustered by `user_id` using `CREATE OR REPLACE TABLE ... PARTITION BY ... CLUSTER BY ...`.",
+      "docLabel": "BigQuery Partitioned Table Quotas",
+      "docUrl": "https://docs.cloud.google.com/bigquery/quotas#partitioned_tables",
+      "q": "What is the maximum number of partitions allowed in a single BigQuery partitioned table, and how should you handle a column with 50 million distinct `customer_id` values?",
+      "opts": [
+        "100 million partitions max; create one partition per `customer_id`",
+        "5 partitions max; store each customer in a separate GCP project",
+        "10,000 partitions max; partition by a date/timestamp column and cluster by `customer_id`"
+      ],
+      "ans": 2,
+      "why": "Clustering handles millions of distinct values without metadata explosion by sorting storage blocks inside each time partition."
+    },
+    {
+      "id": "da-sn-dml-loop",
+      "shortTag": "RowByRowDML",
+      "category": "BigQuery Performance",
+      "service": "BigQuery",
+      "title": "1,000 Single-Row `UPDATE` Statements in a Python Loop",
+      "quip": "\"Migrated an OLTP script that ran 1,000 individual `UPDATE table SET status='DONE' WHERE id=x` statements—rewrote multi-GB storage blocks 1,000 times and hit DML concurrency quotas!\"",
+      "tip": "BigQuery is an analytical columnar warehouse, not an OLTP row store; batch updates into a single `MERGE` statement or stream append-only change records.",
+      "prevent": "Stage updates in a temp/delta table and execute a single set-based `MERGE` statement, or use BigQuery Change History / append-only patterns.",
+      "detect": "High DML queue wait times and `Job exceeded rate limits: too many table update operations` errors in `INFORMATION_SCHEMA.JOBS`.",
+      "recover": "Replace the row-by-row loop with one batched `MERGE INTO target USING staging ON ...` query.",
+      "docLabel": "BigQuery DML Best Practices",
+      "docUrl": "https://docs.cloud.google.com/bigquery/docs/data-manipulation-language",
+      "q": "Why is executing thousands of individual single-row `UPDATE` or `DELETE` DML statements an anti-pattern in BigQuery?",
+      "opts": [
+        "Each mutating DML statement rewrites underlying columnar storage files and consumes DML concurrency slots; batching mutations into one `MERGE` is orders of magnitude more efficient",
+        "BigQuery does not support the `UPDATE` keyword in SQL",
+        "Single-row updates delete the entire dataset"
+      ],
+      "ans": 0,
+      "why": "Set-based `MERGE` operations amortize file rewrites across thousands of rows in a single pass."
+    },
+    {
+      "id": "da-sn-small-files",
+      "shortTag": "1M TinyJSON",
+      "category": "BigQuery Performance",
+      "service": "BigQuery & Cloud Storage",
+      "title": "Loaded 2 Million 1 KB Uncompressed JSON Files from Cloud Storage",
+      "quip": "\"A batch job wrote a separate 1 KB `.json` file per event and triggered BigQuery load jobs—GCS object listing and metadata overhead stalled loads for hours!\"",
+      "tip": "Coalesce small records into larger columnar Parquet/Avro files (100 MB–1 GB) via Dataflow/Pub/Sub Cloud Storage Subscriptions, or stream via Storage Write API.",
+      "prevent": "Use Pub/Sub Cloud Storage subscriptions, Dataflow file batching, or the BigQuery Storage Write API instead of writing millions of tiny files.",
+      "detect": "Slow BigQuery load jobs spending 95% of wall time in file discovery and hitting daily load job quotas.",
+      "recover": "Compact small files into Parquet chunks using Dataflow/Spark and switch live producers to the Storage Write API or Pub/Sub BigQuery subscription.",
+      "docLabel": "BigQuery Batch Loading Best Practices",
+      "docUrl": "https://docs.cloud.google.com/bigquery/docs/batch-loading-data",
+      "q": "Which file format and sizing strategy provides the fastest parallel load performance from Cloud Storage into BigQuery?",
+      "opts": [
+        "Millions of 500-byte single-line CSV files nested 20 directories deep",
+        "Compressed columnar Parquet or Avro files sized roughly 100 MB to 1 GB each so BigQuery readers can split and parse files in parallel",
+        "A single 15 TB gzipped JSON file that cannot be split across workers"
+      ],
+      "ans": 1,
+      "why": "Splittable binary formats (Avro, Parquet, ORC) in medium-to-large file sizes maximize parallel slot ingestion while avoiding GCS listing overhead."
+    },
+    {
+      "id": "da-sn-poison-pill",
+      "shortTag": "Poison Pill",
+      "category": "Streaming & Pub/Sub",
+      "service": "Pub/Sub",
+      "title": "Malformed Message Infinite Retry Loop With No Dead-Letter Topic",
+      "quip": "\"One bad JSON payload caused the subscriber to throw an unhandled exception and `NACK`—Pub/Sub redelivered it 100,000 times, starving valid messages and spiking worker bills!\"",
+      "tip": "Always configure a Dead-Letter Topic (`dead_letter_policy`) with `max_delivery_attempts` (5–20) on production Pub/Sub subscriptions.",
+      "prevent": "Configure a Dead-Letter Topic (`max_delivery_attempts = 5`) and enforce a Pub/Sub Topic Schema at publish time.",
+      "detect": "Cloud Monitoring `pubsub.googleapis.com/subscription/oldest_unacked_message_age` climbing steadily while delivery count spikes.",
+      "recover": "Attach a dead-letter topic to the subscription (and grant the Pub/Sub service agent Publisher/Subscriber roles) to drain the poison messages immediately.",
+      "docLabel": "Pub/Sub Dead-Letter Topics",
+      "docUrl": "https://docs.cloud.google.com/pubsub/docs/handling-failures",
+      "q": "When you attach a Dead-Letter Topic to a Pub/Sub subscription, which IAM permissions must be granted to the Cloud Pub/Sub Service Agent (`service-PROJECT_NUMBER@gcp-sa-pubsub.iam.gserviceaccount.com`)?",
+      "opts": [
+        "`roles/owner` on the entire Google Cloud organization",
+        "No IAM permissions are needed because dead-lettering uses public HTTP",
+        "`roles/pubsub.publisher` on the dead-letter topic AND `roles/pubsub.subscriber` on the source subscription"
+      ],
+      "ans": 2,
+      "why": "The Pub/Sub service agent must publish the failed message to the dead-letter topic and acknowledge it on the original subscription."
+    },
+    {
+      "id": "da-sn-order-key",
+      "shortTag": "HotOrderKey",
+      "category": "Streaming & Pub/Sub",
+      "service": "Pub/Sub",
+      "title": "Single Global `ordering_key = 'ALL'` Serialized Entire Pub/Sub Topic",
+      "quip": "\"A developer set `ordering_key='global'` on every message 'just to keep logs neat'—throughput collapsed and one slow message blocked the entire stream!\"",
+      "tip": "Use high-cardinality entity keys (e.g., `order_id` or `device_id`) for Pub/Sub message ordering so unrelated entities process in parallel.",
+      "prevent": "Scope `ordering_key` to the finest entity granularity that genuinely requires strict causal ordering (e.g., `account_id`).",
+      "detect": "High `send_request_latencies` and growing backlog despite low overall subscriber CPU utilization.",
+      "recover": "Change producers to use per-entity `ordering_key` values (or omit ordering keys where timestamps suffice).",
+      "docLabel": "Pub/Sub Order Messages",
+      "docUrl": "https://docs.cloud.google.com/pubsub/docs/ordering",
+      "q": "What happens in Pub/Sub when all messages published to a topic share the exact same `ordering_key` and one message fails delivery?",
+      "opts": [
+        "Pub/Sub holds back all subsequent messages with that same `ordering_key` to preserve strict order, creating head-of-line blocking for that key",
+        "Pub/Sub automatically parallelizes the key across 1,000 out-of-order threads",
+        "Pub/Sub drops the rest of the topic permanently"
+      ],
+      "ans": 0,
+      "why": "Ordering guarantees sequential delivery per key; a global key turns a massively parallel bus into a single-lane queue."
+    },
+    {
+      "id": "da-sn-unacked-oom",
+      "shortTag": "FlowCtrlOOM",
+      "category": "Streaming & Pub/Sub",
+      "service": "Pub/Sub",
+      "title": "Unbounded Pub/Sub Subscriber Client Without Flow Control Hit OOM",
+      "quip": "\"During a traffic burst, the StreamingPull subscriber buffered 50,000 heavy messages in local RAM before processing—crashing GKE Pods in an `OOMKilled` loop!\"",
+      "tip": "Always configure client-side `FlowControlSettings` (`max_outstanding_elements` and `max_outstanding_bytes`) on Pub/Sub subscribers.",
+      "prevent": "Configure `FlowControlSettings(max_messages=..., max_bytes=...)` in the Pub/Sub subscriber client matching container memory limits.",
+      "detect": "Container memory spiking to 100% (`OOMKilled`) correlated with surges in `pubsub/subscription/num_undelivered_messages`.",
+      "recover": "Deploy subscriber flow-control byte/message caps so the client pauses StreamingPull fetches when in-flight memory reaches safe bounds.",
+      "docLabel": "Pub/Sub Subscriber Flow Control",
+      "docUrl": "https://docs.cloud.google.com/pubsub/docs/flow-control",
+      "q": "How do you prevent a Pub/Sub StreamingPull subscriber from exhausting container memory during an upstream traffic spike?",
+      "opts": [
+        "Disable Pub/Sub message retention on the topic",
+        "Configure subscriber client `FlowControlSettings` (`max_outstanding_elements` and `max_outstanding_bytes`) to bound in-flight messages in memory",
+        "Restart the subscriber VM every 15 seconds via cron"
+      ],
+      "ans": 1,
+      "why": "Client-side flow control throttles inbound lease pulls automatically whenever local in-memory buffered bytes or message counts hit your configured ceiling."
+    },
+    {
+      "id": "da-sn-df-hotkey",
+      "shortTag": "Beam HotKey",
+      "category": "Dataflow & Beam",
+      "service": "Dataflow",
+      "title": "Unfanned `GroupByKey` on `country = 'US'` Stalled Dataflow Autoscaling",
+      "quip": "\"85% of clickstream events had key `'US'`—one single worker thread processed the entire US shard at 100% CPU while 49 other workers sat at 2% CPU!\"",
+      "tip": "Use `Combine.perKey` with `.withHotKeyFanout()` (or shard keys with random sub-prefixes) when aggregating skewed keys in Apache Beam.",
+      "prevent": "Use associative/commutative `CombineFn` transforms with `withHotKeyFanout` instead of raw `GroupByKey` on skewed keys.",
+      "detect": "Dataflow UI showing Hot Key detection banner, skewed worker CPU utilization, and growing system lag (`data_watermark_age`).",
+      "recover": "Enable `--experiments=enable_hot_key_logging` to confirm the skewed key, then update the pipeline with `withHotKeyFanout` and perform a streaming update.",
+      "docLabel": "Troubleshoot Dataflow Hot Keys & Stragglers",
+      "docUrl": "https://docs.cloud.google.com/dataflow/docs/guides/troubleshoot-stragglers",
+      "q": "In Apache Beam on Dataflow, why is a key fundamental unit of parallelism, and how do you mitigate a hot key during a sum/count aggregation?",
+      "opts": [
+        "Adding 500 more workers automatically splits a single raw `GroupByKey` key across all 500 workers without code changes",
+        "Hot keys can only be fixed by switching from streaming to CSV files",
+        "All records for a given key and window are processed serially by a single worker thread; use `Combine.perKey(...).withHotKeyFanout()` to pre-aggregate across intermediate sub-keys"
+      ],
+      "ans": 2,
+      "why": "Because per-key state is serialized per worker, adding workers alone cannot split a single hot key unless pre-combined via fanout or key salting."
+    },
+    {
+      "id": "da-sn-watermark",
+      "shortTag": "StuckWtrmrk",
+      "category": "Dataflow & Beam",
+      "service": "Dataflow",
+      "title": "One Offline Mobile Device Held Back the Event-Time Watermark for 6 Hours",
+      "quip": "\"A single reconnected sensor emitted events stamped 6 hours in the past without allowed lateness tuning—stalling downstream window emissions!\"",
+      "tip": "Configure explicit watermark bounds, `withAllowedLateness`, and accumulating/retracting triggers so late data is handled gracefully without stalling on-time panes.",
+      "prevent": "Use early/on-time/late triggers (`AfterWatermark.pastEndOfWindow().withEarlyFirings(...).withLateFirings(...)`) and bound `withAllowedLateness`.",
+      "detect": "Cloud Monitoring `dataflow.googleapis.com/job/data_watermark_age` diverging sharply from `system_lag`.",
+      "recover": "Update the pipeline window trigger strategy so on-time panes fire predictably and late records emit incremental updates or route to a late-data side output.",
+      "docLabel": "Watermarks and Late Data in Dataflow",
+      "docUrl": "https://docs.cloud.google.com/dataflow/docs/concepts/streaming-pipelines",
+      "q": "In a Dataflow streaming pipeline, what does it mean when `system_lag` is low (2 seconds) but `data_watermark_age` is 4 hours?",
+      "opts": [
+        "Workers are keeping up with incoming messages quickly, but the oldest unprocessed event timestamp in the stream is 4 hours behind wall-clock time",
+        "All worker VMs have crashed and stopped reading from Pub/Sub",
+        "The BigQuery destination table has been deleted"
+      ],
+      "ans": 0,
+      "why": "`system_lag` measures wall-clock processing delay, whereas `data_watermark_age` reflects event-time progress driven by payload timestamps."
+    },
+    {
+      "id": "da-sn-dofn-rpc",
+      "shortTag": "DoFn 1x1RPC",
+      "category": "Dataflow & Beam",
+      "service": "Dataflow",
+      "title": "Synchronous Per-Element External HTTP Call Inside `DoFn.process()`",
+      "quip": "\"Called an external REST API synchronously once per event at 20,000 events/sec—worker threads blocked on network I/O and DDoS'd the partner service!\"",
+      "tip": "Batch external calls using Beam's `GroupIntoBatches`, shared `RunInference`, or periodic `View.asSingleton()` side-input cache refreshes.",
+      "prevent": "Use `GroupIntoBatches` (or stateful batching) with connection reuse initialized in `@Setup` / `@StartBundle`, or join against a periodically refreshed Side Input.",
+      "detect": "High Dataflow wall time with very low worker CPU utilization (<10%) and high downstream API 429/503 error rates.",
+      "recover": "Refactor the `DoFn` to initialize clients in `@Setup` and batch lookups via `GroupIntoBatches` or an in-memory/Memorystore cache.",
+      "docLabel": "Dataflow Pipeline Design Best Practices",
+      "docUrl": "https://docs.cloud.google.com/dataflow/docs/guides/common-pipeline-patterns",
+      "q": "In an Apache Beam `DoFn`, which lifecycle method should be used to initialize heavy, thread-safe network or database clients once per worker process rather than once per element?",
+      "opts": [
+        "`@ProcessElement` (or `process()` in Python)",
+        "`@Setup` (or `setup()` in Python)",
+        "Inside the pipeline driver's `main()` function as a non-serializable socket"
+      ],
+      "ans": 1,
+      "why": "`@Setup` runs once when the `DoFn` instance is deserialized on a worker harness, avoiding per-element or per-bundle connection creation."
+    },
+    {
+      "id": "da-sn-state-leak",
+      "shortTag": "State Leak!",
+      "category": "Dataflow & Beam",
+      "service": "Dataflow",
+      "title": "Unbounded `ValueState` in Global Window Without Timer Expiry",
+      "quip": "\"Stored per-session state in a `GlobalWindow` stateful `DoFn` and forgot to set a cleanup `@OnTimer`—persistent state grew to 12 TB and slowed checkpoints to a crawl!\"",
+      "tip": "Whenever using stateful `DoFn` in a `GlobalWindow`, always pair state writes with a processing-time or event-time TTL timer that calls `.clear()`.",
+      "prevent": "Set a cleanup `TimerSpec` (`TimeDomain.EVENT_TIME` or `PROCESSING_TIME`) on every stateful `DoFn` key to call `state.clear()` after inactivity.",
+      "detect": "Dataflow `total_streaming_data_processed` / persistent state storage bytes growing monotonically without bound.",
+      "recover": "Add a TTL timer callback that clears expired key state and update the running job with `--update`.",
+      "docLabel": "Stateful Processing with Apache Beam",
+      "docUrl": "https://docs.cloud.google.com/dataflow/docs/guides/write-stateful-pipeline",
+      "q": "Why does state in a `GlobalWindow` stateful `DoFn` never get garbage-collected automatically unless you explicitly clear it?",
+      "opts": [
+        "Dataflow deletes all `GlobalWindow` state every 60 seconds automatically",
+        "State is only stored in CPU L1 cache",
+        "State is scoped to `(key, window)`, and the `GlobalWindow` never closes until the end of time—requiring an explicit timer or condition to call `state.clear()`"
+      ],
+      "ans": 2,
+      "why": "Either use bounded windows (Fixed/Session) whose state expires after `window_end + allowed_lateness`, or set a TTL timer in `GlobalWindow`."
+    },
+    {
+      "id": "da-sn-raw-gcs-acl",
+      "shortTag": "RawGCS Leak",
+      "category": "BigLake & Iceberg",
+      "service": "BigLake & Cloud Storage",
+      "title": "Granted Analysts Direct `Storage Object Viewer` on the Raw Parquet Bucket",
+      "quip": "\"Bypassed BigLake connections by granting `roles/storage.objectViewer` directly on the GCS bucket—analysts downloaded raw Parquet files containing unmasked SSNs!\"",
+      "tip": "Never grant end-users direct Cloud Storage bucket read access on governed lakehouse buckets; route all access through BigLake delegated connections.",
+      "prevent": "Revoke user/group roles on the raw GCS bucket and grant access exclusively to the BigLake Cloud Resource Connection service account.",
+      "detect": "Cloud Audit Logs `storage.objects.get` calls originating from end-user principals rather than the BigLake connection service account.",
+      "recover": "Remove direct user IAM bindings from the Cloud Storage bucket and enforce access strictly via BigLake tables with column policy tags.",
+      "docLabel": "Access Control for BigLake Tables",
+      "docUrl": "https://docs.cloud.google.com/bigquery/docs/biglake-intro#access_control",
+      "q": "Why must end-users NOT have `roles/storage.objectViewer` on the underlying Cloud Storage bucket when using BigLake row- and column-level security?",
+      "opts": [
+        "Direct bucket read permissions allow users to download raw Parquet/ORC files directly from Cloud Storage, completely bypassing BigQuery's row filters and column policy tags",
+        "Granting `storage.objectViewer` deletes the BigLake table",
+        "Cloud Storage does not support IAM roles"
+      ],
+      "ans": 0,
+      "why": "BigLake security relies on the Cloud Resource Connection service account being the sole reader of the physical GCS objects."
+    },
+    {
+      "id": "da-sn-iceberg-comp",
+      "shortTag": "IcebergFrag",
+      "category": "BigLake & Iceberg",
+      "service": "BigLake & Apache Iceberg",
+      "title": "Thousands of Streaming Iceberg Snapshots With No Compaction / Snapshot Expiry",
+      "quip": "\"Committed a new Apache Iceberg snapshot every 5 seconds for a month without metadata cleanup—manifest files ballooned and Spark/BigQuery planning lagged!\"",
+      "tip": "Use BigLake Managed Tables for Apache Iceberg (with automatic storage optimization/compaction) or schedule `expire_snapshots` and `rewrite_data_files`.",
+      "prevent": "Use BigLake Managed Tables (which automate file compaction, sort optimization, and orphan file cleanup) or schedule regular Iceberg maintenance.",
+      "detect": "Growing manifest list file counts and rising query planning latency on Iceberg tables.",
+      "recover": "Run Iceberg `rewrite_data_files` + `expire_snapshots` or migrate to BigLake Managed Tables for automated storage management.",
+      "docLabel": "BigLake Managed Tables for Apache Iceberg",
+      "docUrl": "https://docs.cloud.google.com/bigquery/docs/iceberg-tables",
+      "q": "What automated maintenance operations do BigLake Managed Tables perform on Apache Iceberg storage?",
+      "opts": [
+        "Converting Iceberg tables into Microsoft Access `.mdb` files",
+        "Automatic small-file compaction, clustering/sort optimization, snapshot expiration, and unreferenced orphan file garbage collection",
+        "Deleting the table every Sunday night"
+      ],
+      "ans": 1,
+      "why": "Automated compaction and manifest pruning keep open-format Iceberg tables fast without manual Spark maintenance jobs."
+    },
+    {
+      "id": "da-sn-dfm-full",
+      "shortTag": "FullRebuild",
+      "category": "Dataform & Composer",
+      "service": "Dataform",
+      "title": "Dataform `type: 'table'` Rebuilt a 30 TB Fact Table From Scratch Every Hour",
+      "quip": "\"Configured our hourly clickstream transformation as `type: 'table'` instead of `type: 'incremental'`—dropped and scanned 30 TB 24 times a day!\"",
+      "tip": "Use `type: 'incremental'` with `when(incremental(), ...)` and `updatePartitionFilter` in Dataform SQLX for large append/merge fact tables.",
+      "prevent": "Author large fact transformations as `type: 'incremental'` models filtering source and target by recent partition timestamps.",
+      "detect": "BigQuery `INFORMATION_SCHEMA.JOBS` showing hourly `CREATE OR REPLACE TABLE` statements scanning multi-terabyte sources.",
+      "recover": "Refactor the SQLX config block to `type: 'incremental'` with `bigquery: { partitionBy: ..., updatePartitionFilter: ... }`.",
+      "docLabel": "Dataform Table Types & Incremental Models",
+      "docUrl": "https://docs.cloud.google.com/dataform/docs/incremental-tables",
+      "q": "In a Dataform `.sqlx` file configured with `type: 'incremental'`, what does the `${when(incremental(), ...)}` helper do?",
+      "opts": [
+        "Deletes the target table before every incremental run",
+        "Skips running data quality assertions",
+        "Injects a `WHERE` clause (such as filtering for new source partitions) during incremental runs while omitting it during a `--full-refresh` initial build"
+      ],
+      "ans": 2,
+      "why": "`when(incremental(), ...)` lets one SQLX definition support both fast incremental delta appends and clean full backfills."
+    },
+    {
+      "id": "da-sn-dag-parse",
+      "shortTag": "DAG Timeout",
+      "category": "Dataform & Composer",
+      "service": "Cloud Composer",
+      "title": "Top-Level BigQuery Query Inside Airflow DAG File Crashed the DAG Processor",
+      "quip": "\"Put `bq_client.query('SELECT DISTINCT tenant FROM tenants').result()` at the top level of the Python DAG file—executed every 30 seconds during DAG parsing!\"",
+      "tip": "Never execute network calls, database queries, or Secret Manager fetches at top-level module scope in Airflow DAG files; keep top-level code pure and fast.",
+      "prevent": "Move all external API/SQL calls inside Operators, `@task` functions, or Jinja templates evaluated only at task execution time.",
+      "detect": "Cloud Composer `dag_processing/total_parse_time` spiking above 30s, scheduler heartbeats failing, and high unexpected BigQuery query counts.",
+      "recover": "Remove top-level I/O from the DAG Python file so parsing only constructs the Airflow DAG object graph.",
+      "docLabel": "Cloud Composer DAG Authoring Best Practices",
+      "docUrl": "https://docs.cloud.google.com/composer/docs/composer-2/write-dags",
+      "q": "Why does placing a BigQuery query or HTTP call at top-level module scope in a Cloud Composer DAG `.py` file degrade the entire environment?",
+      "opts": [
+        "The Airflow DAG processor re-imports and executes every `.py` file in the `dags/` folder every few seconds just to parse the DAG structure",
+        "Python files in `dags/` are only parsed once when the GCP project is created",
+        "Top-level Python code runs inside the user's web browser"
+      ],
+      "ans": 0,
+      "why": "Top-level code runs continuously on every parse cycle across schedulers and workers; all I/O belongs inside task callables (`execute()` / `@task`)."
+    },
+    {
+      "id": "da-sn-no-assert",
+      "shortTag": "DupJoinBoom",
+      "category": "Dataform & Composer",
+      "service": "Dataform",
+      "title": "Unchecked Duplicate Dimension Keys Caused a 16x Fan-Out Join in Gold Revenue",
+      "quip": "\"An upstream CRM export introduced duplicate `customer_id` rows; without a Dataform `uniqueKey` assertion, the daily `JOIN` multiplied revenue by 16x on the CFO's dashboard!\"",
+      "tip": "Configure `assertions: { uniqueKey: [...], nonNull: [...] }` in Dataform SQLX models and set downstream actions to depend on passing assertions (`dependOnDependencyAssertions: true`).",
+      "prevent": "Add `assertions: { uniqueKey: ['customer_id'], nonNull: ['customer_id'] }` and enable `dependOnDependencyAssertions: true` in Dataform.",
+      "detect": "Dataform workflow invocation assertion failure alerts before downstream gold tables execute.",
+      "recover": "Fix the deduplication logic (`QUALIFY ROW_NUMBER() OVER (...) = 1`), enable blocking assertions, and rerun the Dataform workflow.",
+      "docLabel": "Dataform Assertions for Data Quality",
+      "docUrl": "https://docs.cloud.google.com/dataform/docs/assertions",
+      "q": "How do you ensure a downstream Dataform table does NOT build if an upstream staging table fails its `uniqueKey` or `nonNull` assertion?",
+      "opts": [
+        "Assertions in Dataform are comments only and never execute SQL",
+        "Enable `dependOnDependencyAssertions: true` (or declare the assertion in `dependencies`) so the DAG halts before updating the downstream table",
+        "Delete the assertion whenever it fails"
+      ],
+      "ans": 1,
+      "why": "Making downstream tables depend on upstream assertion nodes turns Dataform assertions into hard circuit-breakers that prevent corrupt data propagation."
+    },
+    {
+      "id": "da-sn-pii-untagged",
+      "shortTag": "PlainPII!",
+      "category": "Dataplex Governance",
+      "service": "Dataplex & DLP",
+      "title": "New Checkout Columns Landed in Analytics With Unmasked Credit Card & Email PII",
+      "quip": "\"A schema evolution added `raw_card_hint` and `personal_email` to the events table without policy tags—exposing sensitive PII to 400 general BI users!\"",
+      "tip": "Enable Sensitive Data Protection (Cloud DLP) automatic discovery profiles with Dataplex Policy Tag auto-tagging and default-masked taxonomies.",
+      "prevent": "Configure Sensitive Data Protection automatic BigQuery data profiles and attach default-masked Dataplex Policy Tags to PII columns in CI/CD.",
+      "detect": "Sensitive Data Protection (DLP) data profile findings flagging High-Sensitivity infoTypes on untagged BigQuery columns.",
+      "recover": "Attach the Restricted/Masked Dataplex Policy Tag to the new columns immediately and purge/mask historical unmasked extracts.",
+      "docLabel": "BigQuery Column-Level Security with Policy Tags",
+      "docUrl": "https://docs.cloud.google.com/bigquery/docs/column-level-security-intro",
+      "q": "What happens when you attach a Dataplex Policy Tag (with 'Enforce access control' enabled) to a sensitive BigQuery column?",
+      "opts": [
+        "Anyone with `roles/bigquery.dataViewer` on the dataset still reads the column in plaintext",
+        "The column is moved to a different Google Cloud project",
+        "Only principals granted the `Fine-Grained Reader` (or `Masked Reader`) role on that specific Policy Tag can query the column; all other dataset readers are blocked or masked"
+      ],
+      "ans": 2,
+      "why": "Policy Tags override broad dataset-level read permissions, enforcing column-level least privilege across the taxonomy."
+    },
+    {
+      "id": "da-sn-row-policy",
+      "shortTag": "CrossTenant",
+      "category": "Dataplex Governance",
+      "service": "BigQuery",
+      "title": "Shared Multi-Tenant Table Queried Without Row-Level Access Policies",
+      "quip": "\"Published a shared partner Looker dashboard backed by a multi-tenant BigQuery table before creating `ROW ACCESS POLICY` filters—Tenant A saw Tenant B's orders!\"",
+      "tip": "Define `CREATE ROW ACCESS POLICY` rules (plus a `TRUE` policy for authorized ETL service accounts) on multi-tenant BigQuery tables.",
+      "prevent": "Enforce `CREATE ROW ACCESS POLICY ... GRANT TO (...) FILTER USING (tenant_id = ...)` before granting partner read access.",
+      "detect": "Cloud Audit Logs `BigQueryAuditMetadata` showing queries without row-access policy evaluation on multi-tenant tables.",
+      "recover": "Apply `CREATE ROW ACCESS POLICY` statements immediately and audit historical query job logs.",
+      "docLabel": "Introduction to BigQuery Row-Level Security",
+      "docUrl": "https://docs.cloud.google.com/bigquery/docs/row-level-security-intro",
+      "q": "Once you create the FIRST `ROW ACCESS POLICY` on a BigQuery table for Tenant A, what rows can a user who has `bigquery.dataViewer` on the table—but is NOT listed in any row access policy—see?",
+      "opts": [
+        "Zero rows (an empty result set), because adding the first row access policy switches the table to an implicit default-deny posture for unmatched users",
+        "All rows in the entire table",
+        "Only rows for Tenant A"
+      ],
+      "ans": 0,
+      "why": "As soon as at least one Row Access Policy exists on a table, any user not matched by a policy sees 0 rows—so always include a `FILTER USING (TRUE)` policy for admin/ETL service accounts."
+    }
+  ],
+  "shields": [
+    {
+      "id": "da-sh-part-req",
+      "shortTag": "ReqPartFltr",
+      "category": "BigQuery Performance",
+      "service": "BigQuery",
+      "title": "Table `require_partition_filter = true` Guardrail",
+      "quip": "\"Rejected an unfiltered ad-hoc `SELECT *` at parse time before it could scan a single byte of our 200 TB fact table!\"",
+      "tip": "Set `require_partition_filter = true` on all large partitioned BigQuery tables so queries without a partition `WHERE` clause fail fast for free.",
+      "docLabel": "Require Partition Filters in BigQuery",
+      "docUrl": "https://docs.cloud.google.com/bigquery/docs/managing-partitioned-tables#require-filter"
+    },
+    {
+      "id": "da-sh-max-bytes",
+      "shortTag": "MaxBytesCap",
+      "category": "BigQuery Performance",
+      "service": "BigQuery",
+      "title": "Per-Query `maximum_bytes_billed` Circuit Breaker",
+      "quip": "\"A runaway cross-join exceeded the 10 GB scan cap and aborted cleanly at $0.00 before touching storage!\"",
+      "tip": "Enforce `maximum_bytes_billed` in query job configs and project/user quotas to prevent accidental multi-terabyte on-demand scans.",
+      "docLabel": "BigQuery Custom Cost Controls",
+      "docUrl": "https://docs.cloud.google.com/bigquery/docs/custom-quotas"
+    },
+    {
+      "id": "da-sh-time-travel",
+      "shortTag": "Time Travel",
+      "category": "BigQuery Performance",
+      "service": "BigQuery",
+      "title": "BigQuery 7-Day Time Travel + Fail-Safe Window",
+      "quip": "\"Restored an accidentally overwritten table in 3 seconds using `FOR SYSTEM_TIME AS OF TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 HOUR)`!\"",
+      "tip": "Use BigQuery Time Travel (`FOR SYSTEM_TIME AS OF`) and Table Clones/Snapshots to recover instantly from bad DML or dropped tables.",
+      "docLabel": "BigQuery Time Travel & Fail-Safe",
+      "docUrl": "https://docs.cloud.google.com/bigquery/docs/time-travel"
+    },
+    {
+      "id": "da-sh-pubsub-schema",
+      "shortTag": "TopicSchema",
+      "category": "Streaming & Pub/Sub",
+      "service": "Pub/Sub",
+      "title": "Pub/Sub Avro / Protocol Buffer Topic Schema Validation",
+      "quip": "\"Blocked a broken mobile app release from publishing corrupt events at the Pub/Sub edge before a single poison pill entered the stream!\"",
+      "tip": "Attach a versioned Avro or Protocol Buffer Schema to Pub/Sub topics so non-conforming messages are rejected at publish time.",
+      "docLabel": "Create and Manage Pub/Sub Schemas",
+      "docUrl": "https://docs.cloud.google.com/pubsub/docs/schemas"
+    },
+    {
+      "id": "da-sh-dlq",
+      "shortTag": "DeadLetterQ",
+      "category": "Streaming & Pub/Sub",
+      "service": "Pub/Sub",
+      "title": "Pub/Sub Dead-Letter Topic + Alert Policy",
+      "quip": "\"Quarantined 3 malformed partner events after 5 delivery attempts while 10 million valid events flowed with zero lag.\"",
+      "tip": "Attach a Dead-Letter Topic (`max_delivery_attempts`) to every production Pub/Sub subscription and alert when dead-letter message count > 0.",
+      "docLabel": "Pub/Sub Dead-Letter Topics",
+      "docUrl": "https://docs.cloud.google.com/pubsub/docs/handling-failures"
+    },
+    {
+      "id": "da-sh-pubsub-seek",
+      "shortTag": "PubSub Seek",
+      "category": "Streaming & Pub/Sub",
+      "service": "Pub/Sub",
+      "title": "Pub/Sub Snapshot & Timestamp Seek Replay",
+      "quip": "\"Deployed a bug fix and used `gcloud pubsub subscriptions seek` to replay the last 2 hours of retained messages with zero data loss!\"",
+      "tip": "Enable `retain_acked_messages` on critical subscriptions or take Pub/Sub Snapshots before risky deployments so you can `seek` back in time.",
+      "docLabel": "Replay Messages with Pub/Sub Seek",
+      "docUrl": "https://docs.cloud.google.com/pubsub/docs/replay-overview"
+    },
+    {
+      "id": "da-sh-df-drain",
+      "shortTag": "Safe Drain",
+      "category": "Dataflow & Beam",
+      "service": "Dataflow",
+      "title": "Dataflow Graceful Drain & Streaming `--update`",
+      "quip": "\"Swapped our streaming pipeline code in-place via `--update` (and drained legacy jobs cleanly) without dropping a single in-flight window!\"",
+      "tip": "Use Dataflow Drain (instead of Cancel) or in-place streaming `--update` with `transformNameMapping` to preserve buffered state during upgrades.",
+      "docLabel": "Update or Drain a Dataflow Pipeline",
+      "docUrl": "https://docs.cloud.google.com/dataflow/docs/guides/updating-a-pipeline"
+    },
+    {
+      "id": "da-sh-beam-dlq",
+      "shortTag": "TupleTagDLQ",
+      "category": "Dataflow & Beam",
+      "service": "Dataflow",
+      "title": "Apache Beam Multi-Output Side Tag (`TupleTag`) Error Sink",
+      "quip": "\"Wrapped parser exceptions inside the `DoFn` and routed bad records to a `dead_letter_tag` TupleTag—zero worker crashes!\"",
+      "tip": "Never let a single corrupt record throw an uncaught exception in a streaming `DoFn`; emit failures to a side-output `TupleTag` for quarantine.",
+      "docLabel": "Dataflow Error Handling Patterns",
+      "docUrl": "https://docs.cloud.google.com/dataflow/docs/guides/common-pipeline-patterns"
+    },
+    {
+      "id": "da-sh-biglake-conn",
+      "shortTag": "BigLakeConn",
+      "category": "BigLake & Iceberg",
+      "service": "BigLake",
+      "title": "BigLake Cloud Resource Connection Delegation",
+      "quip": "\"Isolated raw Cloud Storage buckets completely—only the BigLake connection service account can touch Parquet files while users get governed SQL.\"",
+      "tip": "Bind Cloud Storage bucket IAM strictly to the BigLake Cloud Resource Connection identity and enforce governance in BigQuery.",
+      "docLabel": "BigLake Delegated Connections",
+      "docUrl": "https://docs.cloud.google.com/bigquery/docs/create-cloud-resource-connection"
+    },
+    {
+      "id": "da-sh-iceberg-snap",
+      "shortTag": "IcebergSnap",
+      "category": "BigLake & Iceberg",
+      "service": "BigLake & Iceberg",
+      "title": "Apache Iceberg Snapshot Isolation & Rollback",
+      "quip": "\"Rolled back a faulty Spark batch write on our BigLake Iceberg table to the previous snapshot ID atomically in 1 second!\"",
+      "tip": "Leverage Apache Iceberg's atomic snapshot metadata and BigQuery time-travel to validate and roll back lakehouse writes safely.",
+      "docLabel": "BigLake Iceberg Tables",
+      "docUrl": "https://docs.cloud.google.com/bigquery/docs/iceberg-tables"
+    },
+    {
+      "id": "da-sh-dfm-assert",
+      "shortTag": "SQLX Assert",
+      "category": "Dataform & Composer",
+      "service": "Dataform",
+      "title": "Dataform Blocking Assertions (`dependOnDependencyAssertions`)",
+      "quip": "\"Upstream null spike triggered the staging SQLX assertion and halted the DAG before the executive revenue table could be polluted!\"",
+      "tip": "Combine `uniqueKey`, `nonNull`, and `rowConditions` assertions with `dependOnDependencyAssertions: true` in Dataform.",
+      "docLabel": "Dataform Assertions",
+      "docUrl": "https://docs.cloud.google.com/dataform/docs/assertions"
+    },
+    {
+      "id": "da-sh-comp-snap",
+      "shortTag": "EnvSnapshot",
+      "category": "Dataform & Composer",
+      "service": "Cloud Composer",
+      "title": "Cloud Composer Environment Snapshots & PyPI Pinning",
+      "quip": "\"Tested a major Airflow provider upgrade in a cloned staging environment and kept a verified Composer Snapshot ready for 1-click rollback.\"",
+      "tip": "Save a Cloud Composer Environment Snapshot before upgrading packages or Airflow versions, and pin exact PyPI versions.",
+      "docLabel": "Save and Load Cloud Composer Snapshots",
+      "docUrl": "https://docs.cloud.google.com/composer/docs/composer-2/save-load-environments-snapshots"
+    },
+    {
+      "id": "da-sh-dlp-profile",
+      "shortTag": "DLP Profile",
+      "category": "Dataplex Governance",
+      "service": "Sensitive Data Protection",
+      "title": "Continuous BigQuery Sensitive Data Protection (DLP) Profiling",
+      "quip": "\"Automatically scanned every new BigQuery table across the org and flagged an unmasked `US_SOCIAL_SECURITY_NUMBER` column within minutes!\"",
+      "tip": "Enable Organization-level Sensitive Data Protection (DLP) data profiles for BigQuery to continuously discover and classify PII.",
+      "docLabel": "BigQuery Data Profiles with Sensitive Data Protection",
+      "docUrl": "https://docs.cloud.google.com/sensitive-data-protection/docs/profile-bigquery"
+    },
+    {
+      "id": "da-sh-data-mask",
+      "shortTag": "Dyn Masking",
+      "category": "Dataplex Governance",
+      "service": "BigQuery & Dataplex",
+      "title": "Dataplex Policy Tags + Dynamic Data Masking",
+      "quip": "\"Analysts queried customer tables seamlessly with PII columns dynamically SHA-256 hashed at runtime based on IAM role.\"",
+      "tip": "Pair Dataplex Policy Tags with Dynamic Data Masking policies so unauthorized readers receive masked values instead of query failures.",
+      "docLabel": "BigQuery Dynamic Data Masking",
+      "docUrl": "https://docs.cloud.google.com/bigquery/docs/column-data-masking-intro"
+    },
+    {
+      "id": "da-sh-clean-room",
+      "shortTag": "AnalyticsHb",
+      "category": "Dataplex Governance",
+      "service": "Analytics Hub",
+      "title": "BigQuery Analytics Hub & Data Clean Rooms",
+      "quip": "\"Shared live datasets with external partners via zero-copy Analytics Hub listings and enforced privacy-preserving aggregation thresholds!\"",
+      "tip": "Use BigQuery Analytics Hub and Data Clean Rooms with differential privacy / aggregation threshold policies for secure cross-org data sharing.",
+      "docLabel": "Introduction to Analytics Hub",
+      "docUrl": "https://docs.cloud.google.com/bigquery/docs/analytics-hub-introduction"
+    },
+    {
+      "id": "da-sh-info-schema",
+      "shortTag": "Info Schema",
+      "category": "BigQuery Performance",
+      "service": "BigQuery",
+      "title": "`INFORMATION_SCHEMA.JOBS` Slot & Cost Telemetry Sink",
+      "quip": "\"Identified the top 5 slot-hungry queries and auto-tuned partitioning recommendations using `INFORMATION_SCHEMA` and BigQuery Recommender.\"",
+      "tip": "Monitor `INFORMATION_SCHEMA.JOBS_BY_PROJECT` and the BigQuery Partitioning & Clustering Recommender to continuously optimize FinOps.",
+      "docLabel": "BigQuery INFORMATION_SCHEMA Jobs View",
+      "docUrl": "https://docs.cloud.google.com/bigquery/docs/information-schema-jobs"
+    }
+  ]
+}

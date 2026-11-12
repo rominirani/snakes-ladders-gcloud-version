@@ -38,7 +38,6 @@ def main() -> int:
         packs_map[pack_id] = json.loads(pack_file.read_text(encoding="utf-8"))
 
     default_id = manifest.get("defaultPack", "cloud-architect")
-    default_pack = packs_map.get(default_id) or next(iter(packs_map.values()))
 
     js_lines = [
         "/**",
@@ -53,9 +52,6 @@ def main() -> int:
         f"window.GCP_PACKS = {json.dumps(packs_map, ensure_ascii=False)};",
         "",
         f"window.GCP_DEFAULT_PACK = window.GCP_PACKS[{json.dumps(default_id)}];",
-        "window.GCP_SCENARIOS = window.GCP_DEFAULT_PACK.scenarios;",
-        "window.GCP_QUESTION_BANK = window.GCP_DEFAULT_PACK.questionBank;",
-        "window.GCP_MILESTONES = window.GCP_DEFAULT_PACK.milestones;",
         "",
     ]
 
